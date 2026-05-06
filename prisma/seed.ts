@@ -1,4 +1,4 @@
-import { PrismaClient, SourceType } from "@prisma/client";
+import { PrismaClient, SourceType, TaskPriority, TaskStatus } from "@prisma/client";
 import { slugify } from "../src/lib/slugify";
 
 const prisma = new PrismaClient();
@@ -22,6 +22,37 @@ async function main() {
         ...category,
         slug: slugify(category.name),
       },
+    });
+  }
+
+  const priorityConfigs: { priority: TaskPriority; color: string }[] = [
+    { priority: TaskPriority.low, color: "#64748b" },
+    { priority: TaskPriority.medium, color: "#0ea5e9" },
+    { priority: TaskPriority.high, color: "#f59e0b" },
+    { priority: TaskPriority.critical, color: "#ef4444" },
+  ];
+
+  for (const config of priorityConfigs) {
+    await prisma.priorityConfig.upsert({
+      where: { priority: config.priority },
+      update: config,
+      create: config,
+    });
+  }
+
+  const statusConfigs: { status: TaskStatus; color: string }[] = [
+    { status: TaskStatus.active, color: "#0ea5e9" },
+    { status: TaskStatus.waiting, color: "#f59e0b" },
+    { status: TaskStatus.deferred, color: "#94a3b8" },
+    { status: TaskStatus.done, color: "#22c55e" },
+    { status: TaskStatus.dropped, color: "#6b7280" },
+  ];
+
+  for (const config of statusConfigs) {
+    await prisma.statusConfig.upsert({
+      where: { status: config.status },
+      update: config,
+      create: config,
     });
   }
 
