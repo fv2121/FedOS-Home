@@ -14,10 +14,12 @@ export type CreateTaskDuePreset = (typeof CREATE_TASK_DUE_PRESETS)[number]["dueD
 export type CreateTaskInput = {
   title: string;
   description: string;
+  status?: string;
   category_id?: string;
   project_id?: string;
   priority: string;
   due_at: string;
+  tags?: string;
 };
 
 export type CreateTaskDraft = {

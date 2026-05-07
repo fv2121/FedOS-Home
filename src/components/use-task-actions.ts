@@ -70,13 +70,18 @@ export function useTaskActions(
 
   async function createTask(newTask: CreateTaskInput): Promise<boolean> {
     if (!newTask.title.trim()) return false;
+    const parsedTags = newTask.tags
+      ? newTask.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
     const input = {
       title: newTask.title.trim(),
       priority: newTask.priority,
+      ...(newTask.status ? { status: newTask.status } : {}),
       ...(newTask.description.trim() ? { description: newTask.description.trim() } : {}),
       ...(newTask.category_id ? { category_id: newTask.category_id } : {}),
       ...(newTask.project_id ? { project_id: newTask.project_id } : {}),
       ...(newTask.due_at ? { due_at: newTask.due_at } : {}),
+      ...(parsedTags.length > 0 ? { tags: parsedTags } : {}),
     };
 
     const created = await apiRequest<TaskRow>(

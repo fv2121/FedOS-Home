@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { endOfDay, startOfDay, addDays, format, isAfter, isBefore, isEqual } from "date-fns";
+import { endOfDay, startOfDay, addDays, format, getISOWeek, isAfter, isBefore, isEqual } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, X } from "lucide-react";
 import clsx from "clsx";
-import { isViewOption, TASK_PRIORITIES } from "@/lib/constants";
+import { DEFAULT_OWNER, isViewOption, TASK_PRIORITIES } from "@/lib/constants";
 import {
   isVisibleTaskRow,
   type TaskRow,
@@ -103,6 +103,24 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
   } = useTaskActions(setTasks);
 
   const filteredTasks = useMemo(() => tasks.filter(isVisibleTaskRow), [tasks]);
+
+  const stats = useMemo(() => {
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+    let overdue = 0, today = 0, upcoming = 0;
+    for (const task of filteredTasks) {
+      const d = task.due_at ? new Date(task.due_at) : null;
+      if (d && isBefore(d, todayStart) && task.status !== "done") {
+        overdue++;
+      } else if (d && !isAfter(d, todayEnd)) {
+        today++;
+      } else {
+        upcoming++;
+      }
+    }
+    return { overdue, today, upcoming };
+  }, [filteredTasks]);
+
   const editingTask = useMemo(() => {
     const task = tasks.find((item) => item.id === editingTaskId);
     return task && isVisibleTaskRow(task) ? task : null;
@@ -173,10 +191,46 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
     setOpenTaskMenu(null);
   }
 
+  const greetingHour = new Date().getHours();
+  const greeting = greetingHour < 12 ? "Good morning" : greetingHour < 17 ? "Good afternoon" : "Good evening";
+  const now = new Date();
+  const dateLabel = `${format(now, "EEE d MMM")} · week ${getISOWeek(now)}`;
+
   return (
     <div className="min-h-screen bg-[var(--color-app-bg)] pb-28 md:pb-10">
       <div className="mx-auto w-full max-w-6xl px-3 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)] md:p-6">
         <main className="space-y-4">
+          <section className="md:hidden">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h1 className="text-[1.6rem] font-bold leading-tight text-[var(--color-text-primary)]">
+                  {greeting}, {DEFAULT_OWNER}
+                </h1>
+                <p className="mt-1 text-sm text-[var(--color-text-tertiary)]">{dateLabel}</p>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/avatar.png"
+                alt="Profile"
+                className="h-14 w-14 shrink-0 rounded-full object-cover"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-2xl bg-[var(--color-surface-primary)] p-4">
+                <p className="text-4xl font-bold text-red-400">{stats.overdue}</p>
+                <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">Overdue</p>
+              </div>
+              <div className="rounded-2xl bg-[var(--color-surface-primary)] p-4">
+                <p className="text-4xl font-bold text-amber-400">{stats.today}</p>
+                <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">Today</p>
+              </div>
+              <div className="rounded-2xl bg-[var(--color-surface-primary)] p-4">
+                <p className="text-4xl font-bold text-[var(--color-text-primary)]">{stats.upcoming}</p>
+                <p className="mt-1 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">Upcoming</p>
+              </div>
+            </div>
+          </section>
+
           <section className="hidden rounded-3xl bg-[var(--color-panel)] p-5 shadow-sm backdrop-blur md:block md:p-10">
             <CreateTaskPanel categories={categories} projects={projects} onCreateTask={createTask} />
           </section>

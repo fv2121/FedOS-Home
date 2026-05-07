@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type ComponentType, type FormEvent } from "react";
 import clsx from "clsx";
-import { ChevronDown, FolderKanban, Plus, Tags } from "lucide-react";
-import { TASK_DESCRIPTION_MAX_LENGTH, TASK_PRIORITIES } from "@/lib/constants";
+import { ChevronDown, CircleDot, FolderKanban, Plus, Tags } from "lucide-react";
+import { TASK_DESCRIPTION_MAX_LENGTH, TASK_PRIORITIES, TASK_STATUSES } from "@/lib/constants";
 import {
   CREATE_TASK_DEFAULT_PRIORITY,
   CREATE_TASK_DUE_PRESETS,
@@ -28,8 +28,10 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
   const [selectedDuePreset, setSelectedDuePreset] = useState<CreateTaskDuePreset | null>("today");
   const [dueAt, setDueAt] = useState(() => presetDueDate("today"));
   const [priority, setPriority] = useState(CREATE_TASK_DEFAULT_PRIORITY);
+  const [status, setStatus] = useState("active");
   const [categoryId, setCategoryId] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [tags, setTags] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const canSubmit = title.trim().length > 0 && !submitting;
 
@@ -44,10 +46,12 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
     const created = await onCreateTask({
       title,
       description,
+      status,
       category_id: categoryId || undefined,
       project_id: projectId || undefined,
       priority,
       due_at: dueAt,
+      tags,
     });
     if (created) onBack();
     else setSubmitting(false);
@@ -60,7 +64,7 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
     >
       <form
         onSubmit={handleSubmit}
-        className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-3 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)]"
+        className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-6 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)]"
       >
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4">
           <section>
@@ -161,48 +165,71 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
             </div>
           </section>
 
-          {(categories.length > 0 || projects.length > 0) && (
-            <section className="space-y-2">
-              <SectionHeader name="Meta" />
-              <div>
-                {categories.length > 0 && (
-                  <SelectShell icon={Tags}>
-                    <select
-                      aria-label="Task category"
-                      value={categoryId}
-                      onChange={(event) => setCategoryId(event.target.value)}
-                      className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
-                    >
-                      <option value="">Category</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </SelectShell>
-                )}
+          <section className="space-y-2">
+            <SectionHeader name="Meta" />
+            <div>
+              <SelectShell icon={CircleDot}>
+                <select
+                  aria-label="Task status"
+                  value={status}
+                  onChange={(event) => setStatus(event.target.value)}
+                  className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none capitalize"
+                >
+                  {TASK_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </SelectShell>
 
-                {projects.length > 0 && (
-                  <SelectShell icon={FolderKanban}>
-                    <select
-                      aria-label="Task project"
-                      value={projectId}
-                      onChange={(event) => setProjectId(event.target.value)}
-                      className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
-                    >
-                      <option value="">Project</option>
-                      {projects.map((project) => (
-                        <option key={project.id} value={project.id}>
-                          {project.name}
-                        </option>
-                      ))}
-                    </select>
-                  </SelectShell>
-                )}
-              </div>
-            </section>
-          )}
+              {categories.length > 0 && (
+                <SelectShell icon={Tags}>
+                  <select
+                    aria-label="Task category"
+                    value={categoryId}
+                    onChange={(event) => setCategoryId(event.target.value)}
+                    className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
+                  >
+                    <option value="">Category</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </SelectShell>
+              )}
+
+              {projects.length > 0 && (
+                <SelectShell icon={FolderKanban}>
+                  <select
+                    aria-label="Task project"
+                    value={projectId}
+                    onChange={(event) => setProjectId(event.target.value)}
+                    className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
+                  >
+                    <option value="">Project</option>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </SelectShell>
+              )}
+
+              <FlatInputRow>
+                <input
+                  aria-label="Task tags"
+                  value={tags}
+                  onChange={(event) => setTags(event.target.value)}
+                  placeholder="Tags (comma-separated)"
+                  className="w-full bg-transparent text-base font-medium text-[var(--color-text-secondary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
+                />
+              </FlatInputRow>
+            </div>
+          </section>
         </div>
 
         <div className="pt-3">

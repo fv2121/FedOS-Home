@@ -262,7 +262,7 @@ export function TaskEditOverlay({
         aria-labelledby="mobile-task-edit-title"
         onSubmit={handleSubmit}
         onKeyDown={trapDialogFocus}
-        className="fixed inset-0 z-50 flex flex-col bg-[var(--color-app-bg)] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+1rem)] md:hidden"
+        className="fixed inset-0 z-50 flex flex-col bg-[var(--color-app-bg)] px-6 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+1rem)] md:hidden"
       >
         <div className="mb-2 flex min-h-10 items-center justify-end">
           <h2 id="mobile-task-edit-title" className="sr-only">
