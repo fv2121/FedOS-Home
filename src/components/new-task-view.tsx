@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentType, type FormEvent } from "react";
 import { addDays, format } from "date-fns";
 import clsx from "clsx";
-import { ArrowLeft } from "lucide-react";
-import { TASK_PRIORITIES } from "@/lib/constants";
+import { CalendarDays, ChevronDown, FolderKanban, Plus, Tags } from "lucide-react";
+import { TASK_DESCRIPTION_MAX_LENGTH, TASK_PRIORITIES } from "@/lib/constants";
 import type { Category, Project } from "./dashboard-types";
 
 type Props = {
@@ -21,33 +21,59 @@ type Props = {
   onBack: () => void;
 };
 
-const DUE_PRESETS = [
-  { label: "Today", value: format(new Date(), "yyyy-MM-dd") },
-  { label: "Tomorrow", value: format(addDays(new Date(), 1), "yyyy-MM-dd") },
-  { label: "This week", value: format(addDays(new Date(), (5 - new Date().getDay() + 7) % 7 || 7), "yyyy-MM-dd") },
-  { label: "No date", value: "" },
+const DUE_DATE_PRESETS = [
+  { label: "Today", dueDate: "today" },
+  { label: "Tom", dueDate: "tomorrow" },
+  { label: "Week", dueDate: "this-week" },
+  { label: "None", dueDate: "none" },
 ] as const;
+
+type DueDatePreset = (typeof DUE_DATE_PRESETS)[number]["dueDate"];
+
+function presetDueDate(dueDate: DueDatePreset) {
+  const today = new Date();
+
+  if (dueDate === "none") {
+    return "";
+  }
+
+  if (dueDate === "tomorrow") {
+    return format(addDays(today, 1), "yyyy-MM-dd");
+  }
+
+  if (dueDate === "this-week") {
+    const daysUntilFriday = (5 - today.getDay() + 7) % 7;
+    return format(addDays(today, daysUntilFriday), "yyyy-MM-dd");
+  }
+
+  return format(today, "yyyy-MM-dd");
+}
 
 export function NewTaskView({ categories, projects, onCreateTask, onBack }: Props) {
   const titleRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dueAt, setDueAt] = useState(DUE_PRESETS[0].value);
+  const [selectedDuePreset, setSelectedDuePreset] = useState<DueDatePreset | null>("today");
+  const [dueAt, setDueAt] = useState(() => presetDueDate("today"));
   const [priority, setPriority] = useState("medium");
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const [categoryId, setCategoryId] = useState("");
+  const [projectId, setProjectId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const canSubmit = title.trim().length > 0 && !submitting;
 
   useEffect(() => {
     titleRef.current?.focus();
   }, []);
 
-  async function handleSubmit() {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (!title.trim() || submitting) return;
     setSubmitting(true);
     const created = await onCreateTask({
       title,
       description,
       category_id: categoryId || undefined,
+      project_id: projectId || undefined,
       priority,
       due_at: dueAt,
     });
@@ -56,133 +82,205 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
   }
 
   return (
-    <div className="fixed inset-x-0 top-0 z-10 flex flex-col bg-[var(--color-app-bg)] md:hidden" style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}>
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-text-secondary)]"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">
-          New task
-        </span>
-      </div>
+    <div
+      className="fixed inset-x-0 top-0 z-10 flex flex-col bg-[var(--color-app-bg)] md:hidden"
+      style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
+    >
+      <form onSubmit={handleSubmit} className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col p-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-3">
+          <section className="space-y-1">
+            <SectionHeader name="Task" />
+            <div className="space-y-1">
+              <input
+                ref={titleRef}
+                aria-label="Task title"
+                type="text"
+                placeholder="Title..."
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                className="block min-h-12 w-full rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-base font-medium text-[var(--color-text-primary)] outline-none transition placeholder:text-[var(--color-text-tertiary)] focus:bg-[var(--color-surface-secondary)]"
+              />
+              <textarea
+                aria-label="Task description"
+                maxLength={TASK_DESCRIPTION_MAX_LENGTH}
+                placeholder="Description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={4}
+                className="block w-full resize-none rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-sm text-[var(--color-text-secondary)] outline-none transition placeholder:text-[var(--color-text-tertiary)] focus:bg-[var(--color-surface-secondary)]"
+              />
+            </div>
+          </section>
 
-      {/* Form */}
-      <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-5 pt-4 pb-8">
-        {/* Title */}
-        <input
-          ref={titleRef}
-          type="text"
-          placeholder="What needs to be done?"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-transparent text-2xl font-semibold leading-snug text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
-        />
+          <section className="space-y-1">
+            <SectionHeader name="When" />
+            <div className="grid grid-cols-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-1">
+              {DUE_DATE_PRESETS.map((preset) => {
+                const selected = selectedDuePreset === preset.dueDate;
 
-        {/* Description */}
-        <textarea
-          placeholder="Notes..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          className="w-full resize-none bg-transparent text-base text-[var(--color-text-secondary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
-        />
-
-        <hr className="border-[var(--color-line)]" />
-
-        {/* Due date */}
-        <div>
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">When</p>
-          <div className="flex flex-wrap gap-2">
-            {DUE_PRESETS.map((preset) => {
-              const active = dueAt === preset.value;
-              return (
-                <button
-                  key={preset.label}
-                  type="button"
-                  onClick={() => setDueAt(preset.value)}
-                  className={clsx(
-                    "rounded-full px-4 py-2 text-sm font-semibold transition",
-                    active
-                      ? "bg-[var(--color-text-primary)] text-[var(--color-surface-primary)]"
-                      : "bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)]",
-                  )}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Priority */}
-        <div>
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Priority</p>
-          <div className="flex flex-wrap gap-2">
-            {TASK_PRIORITIES.map((p) => {
-              const active = priority === p;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPriority(p)}
-                  className={clsx(
-                    "rounded-full px-4 py-2 text-sm font-semibold capitalize transition",
-                    active
-                      ? "bg-[var(--color-text-primary)] text-[var(--color-surface-primary)]"
-                      : "bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)]",
-                  )}
-                >
-                  {p}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Category */}
-        {categories.length > 0 && (
-          <div>
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Category</p>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => {
-                const active = categoryId === cat.id;
                 return (
                   <button
-                    key={cat.id}
+                    key={preset.dueDate}
                     type="button"
-                    onClick={() => setCategoryId(cat.id)}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setSelectedDuePreset(preset.dueDate);
+                      setDueAt(presetDueDate(preset.dueDate));
+                    }}
                     className={clsx(
-                      "rounded-full px-4 py-2 text-sm font-semibold transition",
-                      active
-                        ? "bg-[var(--color-text-primary)] text-[var(--color-surface-primary)]"
-                        : "bg-[var(--color-surface-secondary)] text-[var(--color-text-secondary)]",
+                      "flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition",
+                      selected
+                        ? "bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)]",
                     )}
                   >
-                    {cat.name}
+                    {preset.label}
                   </button>
                 );
               })}
             </div>
-          </div>
-        )}
-      </div>
+            <IconInput icon={CalendarDays}>
+              <input
+                aria-label="Due date"
+                type="date"
+                value={dueAt}
+                onChange={(event) => {
+                  setSelectedDuePreset(null);
+                  setDueAt(event.target.value);
+                }}
+                className="date-input-compact w-full bg-transparent text-sm font-medium text-[var(--color-text-secondary)] outline-none"
+              />
+            </IconInput>
+          </section>
 
-      {/* Submit */}
-      <div className="px-5 pb-6 pt-2">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!title.trim() || submitting}
-          className="w-full rounded-2xl bg-[var(--color-text-primary)] py-4 text-base font-bold text-[var(--color-surface-primary)] transition disabled:opacity-40"
-        >
-          {submitting ? "Adding…" : "Add task"}
-        </button>
-      </div>
+          <section className="space-y-1">
+            <SectionHeader name="Priority" />
+            <div className="grid grid-cols-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-1">
+              {TASK_PRIORITIES.map((taskPriority) => {
+                const selected = priority === taskPriority;
+
+                return (
+                  <button
+                    key={taskPriority}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setPriority(taskPriority)}
+                    className={clsx(
+                      "flex min-h-10 items-center justify-center rounded-lg px-2 text-sm font-semibold capitalize transition",
+                      selected
+                        ? "bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)]",
+                    )}
+                  >
+                    {taskPriority}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {(categories.length > 0 || projects.length > 0) && (
+            <section className="space-y-1">
+              <SectionHeader name="Meta" />
+              <div className="space-y-1">
+                {categories.length > 0 && (
+                  <SelectShell icon={Tags}>
+                    <select
+                      aria-label="Task category"
+                      value={categoryId}
+                      onChange={(event) => setCategoryId(event.target.value)}
+                      className="w-full appearance-none bg-transparent pr-7 text-sm font-medium text-[var(--color-text-secondary)] outline-none"
+                    >
+                      <option value="">Category</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </SelectShell>
+                )}
+
+                {projects.length > 0 && (
+                  <SelectShell icon={FolderKanban}>
+                    <select
+                      aria-label="Task project"
+                      value={projectId}
+                      onChange={(event) => setProjectId(event.target.value)}
+                      className="w-full appearance-none bg-transparent pr-7 text-sm font-medium text-[var(--color-text-secondary)] outline-none"
+                    >
+                      <option value="">Project</option>
+                      {projects.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </select>
+                  </SelectShell>
+                )}
+              </div>
+            </section>
+          )}
+        </div>
+
+        <div className="border-t border-[var(--color-line)] pt-3">
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className={clsx(
+              "flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border px-4 py-3 text-base font-bold transition",
+              canSubmit
+                ? "border-transparent bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
+                : "cursor-not-allowed border-[var(--color-line)] bg-[var(--color-surface-primary)] text-[var(--color-text-tertiary)]",
+            )}
+          >
+            <Plus className="h-5 w-5 stroke-[3]" />
+            {submitting ? "Adding..." : "Add task"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function SectionHeader({ name }: { name: string }) {
+  return (
+    <div className="flex min-h-7 items-center gap-2">
+      <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-[var(--color-accent)]">
+        {name}
+      </h2>
+      <span className="h-px flex-1 bg-[var(--color-line)]" />
+    </div>
+  );
+}
+
+function IconInput({
+  icon: Icon,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-10 items-center gap-2 rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-[var(--color-text-secondary)]">
+      <Icon className="h-4 w-4 shrink-0 text-[var(--color-text-tertiary)]" />
+      {children}
+    </div>
+  );
+}
+
+function SelectShell({
+  icon: Icon,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative flex min-h-10 min-w-0 items-center gap-2 rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-[var(--color-text-secondary)]">
+      <Icon className="h-4 w-4 shrink-0 text-[var(--color-text-tertiary)]" />
+      {children}
+      <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4 text-[var(--color-text-secondary)]" />
     </div>
   );
 }

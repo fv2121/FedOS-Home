@@ -118,7 +118,7 @@ export function TaskCard({
     <article
       data-task-menu-root={task.id}
       className={clsx(
-        "relative grid min-h-10 grid-cols-[16px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-surface-secondary)] lg:grid-cols-[16px_minmax(0,1fr)_4.5rem_minmax(14rem,18rem)_4.75rem]",
+        "relative grid min-h-11 grid-cols-[16px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 bg-transparent px-1 py-2.5 text-[var(--color-text-primary)] transition-colors md:min-h-10 md:gap-x-3 md:rounded-lg md:bg-[var(--color-surface-primary)] md:px-3 md:py-2 md:hover:bg-[var(--color-surface-secondary)] lg:grid-cols-[16px_minmax(0,1fr)_4.5rem_minmax(14rem,18rem)_4.75rem]",
         openMenu ? "z-40" : "z-0",
       )}
     >
@@ -129,22 +129,30 @@ export function TaskCard({
         aria-label={isDone ? "Mark task active" : "Mark task done"}
         onClick={toggleComplete}
         className={clsx(
-          "flex h-4 w-4 items-center justify-center rounded-[4px] border transition",
+          "flex h-5 w-5 items-center justify-center rounded-[5px] border-2 transition md:h-4 md:w-4 md:rounded-[4px] md:border",
           isDone
             ? "border-[var(--color-text-success)] bg-[var(--color-text-success)] text-white"
             : "border-[var(--color-line)] bg-transparent text-transparent hover:border-[var(--color-text-success)]",
         )}
       >
-        <Check className="h-3 w-3 stroke-[3]" />
+        <Check className="h-3.5 w-3.5 stroke-[3] md:h-3 md:w-3" />
       </button>
 
       <div className="flex min-w-0 items-center gap-2 lg:contents">
+        <span
+          className={clsx(
+            "min-w-0 flex-1 truncate text-base font-medium text-[var(--color-text-primary)] md:hidden",
+            isDone && "text-[var(--color-text-tertiary)] line-through",
+          )}
+        >
+          {task.title}
+        </span>
         <button
           type="button"
           onClick={editTask}
           aria-label={`Edit ${task.title}`}
           className={clsx(
-            "min-w-0 flex-1 truncate text-left text-[13px] font-medium text-[var(--color-text-primary)] transition hover:text-[var(--color-text-secondary)]",
+            "hidden min-w-0 flex-1 truncate text-left text-[13px] font-medium text-[var(--color-text-primary)] transition hover:text-[var(--color-text-secondary)] md:block",
             isDone && "text-[var(--color-text-tertiary)] line-through",
           )}
         >
@@ -153,7 +161,7 @@ export function TaskCard({
         <button
           type="button"
           onClick={editTask}
-          className="shrink-0 text-[var(--color-text-tertiary)] transition hover:text-[var(--color-text-primary)] lg:hidden"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)] md:hidden"
           aria-label={`Edit ${task.title}`}
         >
           <Pencil className="h-3.5 w-3.5" />

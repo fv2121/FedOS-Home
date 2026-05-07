@@ -10,17 +10,19 @@ type Props = {
 
 export function BottomNav({ activeView, updateURL }: Props) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-2 pt-1 [padding-bottom:max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--color-line)] bg-[var(--color-panel)] px-2 pt-1 [padding-bottom:max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
       <ul className="grid grid-cols-2 gap-1">
         <li>
           <button
             onClick={() => updateURL({ view: "home" })}
             className={clsx(
-              "flex w-full flex-col items-center rounded-xl px-1 py-1 text-[11px]",
-              activeView === "home" ? "bg-slate-900 text-white" : "text-slate-600",
+              "flex min-h-14 w-full flex-col items-center justify-center rounded-xl px-1 py-2 text-[13px] font-medium transition",
+              activeView === "home"
+                ? "bg-[var(--color-surface-secondary)] text-[var(--color-accent)]"
+                : "text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-secondary)]",
             )}
           >
-            <Home className="h-4 w-4" />
+            <Home className="h-5 w-5" />
             home
           </button>
         </li>
@@ -28,11 +30,13 @@ export function BottomNav({ activeView, updateURL }: Props) {
           <button
             onClick={() => updateURL({ view: "new" })}
             className={clsx(
-              "flex w-full flex-col items-center rounded-xl px-1 py-1 text-[11px]",
-              activeView === "new" ? "bg-slate-900 text-white" : "text-slate-600",
+              "flex min-h-14 w-full flex-col items-center justify-center rounded-xl px-1 py-2 text-[13px] font-medium transition",
+              activeView === "new"
+                ? "bg-[var(--color-surface-secondary)] text-[var(--color-accent)]"
+                : "text-[var(--color-text-tertiary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-secondary)]",
             )}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-5 w-5" />
             new task
           </button>
         </li>

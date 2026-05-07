@@ -34,10 +34,10 @@ type ListGroup = "date" | "priority" | "category" | "project";
 type OpenTaskMenu = { taskId: string; menu: TaskCardMenu } | null;
 
 const LIST_GROUP_OPTIONS = [
-  { id: "date", label: "By date", icon: CalendarDays },
-  { id: "priority", label: "By priority", icon: Signal },
-  { id: "category", label: "By category", icon: Tags },
-  { id: "project", label: "By project", icon: FolderKanban },
+  { id: "date", label: "By date", mobileLabel: "date", icon: CalendarDays },
+  { id: "priority", label: "By priority", mobileLabel: "priority", icon: Signal },
+  { id: "category", label: "By category", mobileLabel: "category", icon: Tags },
+  { id: "project", label: "By project", mobileLabel: "project", icon: FolderKanban },
 ] as const;
 
 export function TaskDashboard({ initialTasks, categories, projects, priorityConfigs, statusConfigs }: Props) {
@@ -181,9 +181,8 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
           </section>
 
           <section className="bg-[var(--color-panel)] p-3 shadow-sm backdrop-blur max-md:bg-transparent max-md:shadow-none md:rounded-3xl md:border md:border-[var(--color-line)] md:p-5">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Tasks</h2>
-              <div className="grid grid-cols-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-1">
+            <div className="mb-5 md:mb-3">
+              <div className="grid grid-cols-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-1 max-md:w-full">
                 {LIST_GROUP_OPTIONS.map((option) => {
                   const Icon = option.icon;
                   const active = listGroup === option.id;
@@ -197,14 +196,15 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
                         updateURL({ groupBy: option.id === "date" ? null : option.id });
                       }}
                       className={clsx(
-                        "flex min-h-8 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold transition sm:px-3 sm:text-xs",
+                        "flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold transition sm:px-3 sm:text-xs max-md:min-h-12 max-md:gap-2 max-md:text-xl",
                         active
                           ? "bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
                           : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)]",
                       )}
                     >
-                      <Icon className="h-3.5 w-3.5 shrink-0" />
-                      <span>{option.label}</span>
+                      <Icon className="h-3.5 w-3.5 shrink-0 max-md:h-5 max-md:w-5" />
+                      <span className="md:hidden">{option.mobileLabel}</span>
+                      <span className="hidden md:inline">{option.label}</span>
                     </button>
                   );
                 })}
@@ -225,7 +225,7 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
                       onToggle={() => toggleGroup(groupKey)}
                     />
                     {!collapsed && (
-                      <div className="space-y-1">
+                      <div className="space-y-0 md:space-y-1">
                         {[...categoryTasks].sort((a, b) => (a.status === "done" ? 1 : 0) - (b.status === "done" ? 1 : 0)).map((task) => (
                           <TaskCard
                             key={task.id}
@@ -342,10 +342,10 @@ function SectionHeader({
           className={clsx("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
         />
       </button>
-      <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--color-accent)]">
+      <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--color-accent)] max-md:text-sm">
         {name}
       </h3>
-      <span className="text-[11px] text-[var(--color-text-tertiary)]">({count})</span>
+      <span className="text-[11px] text-[var(--color-text-tertiary)] max-md:text-xs">({count})</span>
       <span className="h-px flex-1 bg-[var(--color-line)]" />
     </div>
   );
