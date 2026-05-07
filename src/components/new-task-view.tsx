@@ -1,62 +1,33 @@
 "use client";
 
 import { useEffect, useRef, useState, type ComponentType, type FormEvent } from "react";
-import { addDays, format } from "date-fns";
 import clsx from "clsx";
 import { ChevronDown, FolderKanban, Plus, Tags } from "lucide-react";
 import { TASK_DESCRIPTION_MAX_LENGTH, TASK_PRIORITIES } from "@/lib/constants";
+import {
+  CREATE_TASK_DEFAULT_PRIORITY,
+  CREATE_TASK_DUE_PRESETS,
+  presetDueDate,
+  type CreateTaskDuePreset,
+  type CreateTaskInput,
+} from "./create-task-model";
 import type { Category, Project } from "./dashboard-types";
 
 type Props = {
   categories: Category[];
   projects: Project[];
-  onCreateTask: (task: {
-    title: string;
-    description: string;
-    category_id?: string;
-    project_id?: string;
-    priority: string;
-    due_at: string;
-  }) => Promise<boolean>;
+  onCreateTask: (task: CreateTaskInput) => Promise<boolean>;
   onBack: () => void;
 };
-
-const DUE_DATE_PRESETS = [
-  { label: "Today", dueDate: "today" },
-  { label: "Tom", dueDate: "tomorrow" },
-  { label: "Week", dueDate: "this-week" },
-  { label: "None", dueDate: "none" },
-] as const;
-
-type DueDatePreset = (typeof DUE_DATE_PRESETS)[number]["dueDate"];
-
-function presetDueDate(dueDate: DueDatePreset) {
-  const today = new Date();
-
-  if (dueDate === "none") {
-    return "";
-  }
-
-  if (dueDate === "tomorrow") {
-    return format(addDays(today, 1), "yyyy-MM-dd");
-  }
-
-  if (dueDate === "this-week") {
-    const daysUntilFriday = (5 - today.getDay() + 7) % 7;
-    return format(addDays(today, daysUntilFriday), "yyyy-MM-dd");
-  }
-
-  return format(today, "yyyy-MM-dd");
-}
 
 export function NewTaskView({ categories, projects, onCreateTask, onBack }: Props) {
   const titleRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedDuePreset, setSelectedDuePreset] = useState<DueDatePreset | null>("today");
+  const [selectedDuePreset, setSelectedDuePreset] = useState<CreateTaskDuePreset | null>("today");
   const [dueAt, setDueAt] = useState(() => presetDueDate("today"));
-  const [priority, setPriority] = useState("medium");
+  const [priority, setPriority] = useState(CREATE_TASK_DEFAULT_PRIORITY);
   const [categoryId, setCategoryId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -126,7 +97,7 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
           <section className="space-y-2">
             <SectionHeader name="When" />
             <div className="grid grid-cols-4 border-b border-[var(--color-line)]">
-              {DUE_DATE_PRESETS.map((preset) => {
+              {CREATE_TASK_DUE_PRESETS.map((preset) => {
                 const selected = selectedDuePreset === preset.dueDate;
 
                 return (
@@ -145,7 +116,7 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
                         : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
                     )}
                   >
-                    {preset.label}
+                    {preset.mobileLabel}
                   </button>
                 );
               })}

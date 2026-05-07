@@ -4,7 +4,14 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 const SIGNATURE_HEX_LENGTH = 64;
 
 function secret(): string {
-  return process.env.AUTH_SECRET ?? "dev-secret-change-me";
+  const s = process.env.AUTH_SECRET;
+  if (!s) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("AUTH_SECRET environment variable is required in production");
+    }
+    return "dev-secret-only-in-dev";
+  }
+  return s;
 }
 
 function sign(payload: string): string {

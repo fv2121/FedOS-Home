@@ -6,11 +6,10 @@ import {
   verifySessionToken,
 } from "@/lib/session-token";
 
-// Dev-only fallback: bcrypt hash of "fedos". Override AUTH_PASSWORD_HASH in production.
-const DEV_PASSWORD_HASH = "$2b$10$IYe0jl7VjQEcDtktwfIRJ.4E49KqTg16WlK4ctTosEWPN5xiCIVI2";
-
 function passwordHash(): string {
-  return process.env.AUTH_PASSWORD_HASH ?? DEV_PASSWORD_HASH;
+  const hash = process.env.AUTH_PASSWORD_HASH;
+  if (!hash) throw new Error("AUTH_PASSWORD_HASH environment variable is required");
+  return hash;
 }
 
 export async function isPasswordValid(candidate: string): Promise<boolean> {

@@ -81,7 +81,7 @@ try {
 - httpOnly, sameSite=lax cookies (secure in production)
 - Middleware checks token structure/expiry; route helpers verify full signature
 - Rate limiting on login: 5 attempts per IP per 15-minute window
-- Default dev password "fedos" (bcrypt hash built-in) — must override AUTH_PASSWORD_HASH for deployment
+- AUTH_PASSWORD_HASH must be set in all environments (no built-in fallback)
 
 ## Database
 

@@ -2,62 +2,26 @@
 
 import { useState } from "react";
 import { ChevronDown, Plus } from "lucide-react";
-import { addDays, format } from "date-fns";
 import clsx from "clsx";
 import { TASK_DESCRIPTION_MAX_LENGTH, TASK_PRIORITIES } from "@/lib/constants";
+import {
+  CREATE_TASK_DUE_PRESETS,
+  createDefaultTaskDraft,
+  presetDueDate,
+  type CreateTaskDuePreset,
+  type CreateTaskInput,
+} from "./create-task-model";
 import type { Category, Project } from "./dashboard-types";
 
 type Props = {
   categories: Category[];
   projects: Project[];
-  onCreateTask: (task: {
-    title: string;
-    description: string;
-    category_id?: string;
-    project_id?: string;
-    priority: string;
-    due_at: string;
-  }) => Promise<boolean>;
+  onCreateTask: (task: CreateTaskInput) => Promise<boolean>;
 };
 
-const DUE_DATE_PRESETS = [
-  { label: "Today", dueDate: "today" },
-  { label: "Tom", dueDate: "tomorrow" },
-  { label: "Week", dueDate: "this-week" },
-  { label: "No date", dueDate: "none" },
-] as const;
-
-type DueDatePreset = (typeof DUE_DATE_PRESETS)[number]["dueDate"];
-
-function presetDueDate(dueDate: DueDatePreset) {
-  const today = new Date();
-
-  if (dueDate === "none") {
-    return "";
-  }
-
-  if (dueDate === "tomorrow") {
-    return format(addDays(today, 1), "yyyy-MM-dd");
-  }
-
-  if (dueDate === "this-week") {
-    const daysUntilFriday = (5 - today.getDay() + 7) % 7;
-    return format(addDays(today, daysUntilFriday), "yyyy-MM-dd");
-  }
-
-  return format(today, "yyyy-MM-dd");
-}
-
 export function CreateTaskPanel({ categories, projects, onCreateTask }: Props) {
-  const [selectedDuePreset, setSelectedDuePreset] = useState<DueDatePreset | null>("today");
-  const [newTask, setNewTask] = useState({
-    title: "",
-    description: "",
-    category_id: "",
-    project_id: "",
-    priority: "medium",
-    due_at: presetDueDate("today"),
-  });
+  const [selectedDuePreset, setSelectedDuePreset] = useState<CreateTaskDuePreset | null>("today");
+  const [newTask, setNewTask] = useState(createDefaultTaskDraft);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -110,12 +74,12 @@ export function CreateTaskPanel({ categories, projects, onCreateTask }: Props) {
           When
         </p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          {DUE_DATE_PRESETS.map((preset) => {
+          {CREATE_TASK_DUE_PRESETS.map((preset) => {
             const selected = selectedDuePreset === preset.dueDate;
 
             return (
               <button
-                key={preset.label}
+                key={preset.dueDate}
                 type="button"
                 aria-pressed={selected}
                 onClick={() => {
@@ -129,7 +93,7 @@ export function CreateTaskPanel({ categories, projects, onCreateTask }: Props) {
                     : "border-transparent text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]",
                 )}
               >
-                {preset.label}
+                {preset.desktopLabel}
               </button>
             );
           })}

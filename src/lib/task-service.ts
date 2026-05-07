@@ -465,6 +465,7 @@ export async function updateTaskCategory(
     const updated = await tx.task.update({
       where: { id: taskId },
       data: { category_id: categoryId },
+      include: TASK_INCLUDE,
     });
 
     await createEvent(tx, {

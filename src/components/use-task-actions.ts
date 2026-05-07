@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { CreateTaskInput } from "./create-task-model";
 import type { TaskRow, TaskUpdateFields } from "./dashboard-types";
 
 export function useTaskActions(
@@ -67,14 +68,7 @@ export function useTaskActions(
     }
   }
 
-  async function createTask(newTask: {
-    title: string;
-    description: string;
-    category_id?: string;
-    project_id?: string;
-    priority: string;
-    due_at: string;
-  }): Promise<boolean> {
+  async function createTask(newTask: CreateTaskInput): Promise<boolean> {
     if (!newTask.title.trim()) return false;
     const input = {
       title: newTask.title.trim(),
@@ -140,6 +134,7 @@ export function useTaskActions(
     );
 
     if (!updated) return;
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updated } : t)));
     startTransition(() => router.refresh());
   }
 

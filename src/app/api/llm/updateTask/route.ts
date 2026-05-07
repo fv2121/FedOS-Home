@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { fail, ok } from "@/lib/http";
+import { ok } from "@/lib/http";
 import { eventActorSchema, updateTaskSchema } from "@/lib/validators";
-import { requireJson } from "@/lib/route-helpers";
+import { failFromError, requireJson } from "@/lib/route-helpers";
 import { updateTask } from "@/lib/task-service";
 
 const schema = z.object({
@@ -25,6 +25,6 @@ export async function POST(request: NextRequest) {
     );
     return ok(task);
   } catch (error) {
-    return fail("updateTask failed", 500, String(error));
+    return failFromError("updateTask", error);
   }
 }

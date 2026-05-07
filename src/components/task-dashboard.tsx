@@ -285,13 +285,13 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
       {error && (
         <div
           role="alert"
-          className="fixed inset-x-3 top-3 z-[70] flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm font-medium text-rose-700 shadow-lg md:left-auto md:w-96"
+          className="fixed inset-x-3 top-3 z-[70] flex items-center justify-between gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-4 py-3 text-sm font-medium text-[var(--color-text-danger)] shadow-lg md:left-auto md:w-96"
         >
           <span>{error}</span>
           <button
             type="button"
             onClick={clearError}
-            className="rounded-full p-1 text-rose-700 transition hover:bg-rose-50"
+            className="rounded-full p-1 text-[var(--color-text-danger)] transition hover:bg-[var(--color-surface-secondary)]"
             aria-label="Dismiss error"
           >
             <X className="h-4 w-4" />
@@ -300,7 +300,7 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
       )}
 
       {isPending && (
-        <div className="fixed bottom-36 right-3 z-[70] rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white md:bottom-auto md:top-20">
+        <div className="fixed bottom-36 right-3 z-[70] rounded-full bg-[var(--color-accent)] px-3 py-1 text-xs font-semibold text-[var(--color-accent-foreground)] md:bottom-auto md:top-20">
           Updating...
         </div>
       )}

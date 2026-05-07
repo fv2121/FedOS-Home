@@ -27,12 +27,12 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Search</h2>
+        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Search</h2>
         <div className="flex items-center gap-2">
           <select
             value={searchParams.get("priority") ?? ""}
             onChange={(e) => updateURL({ priority: e.target.value || null })}
-            className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs md:text-sm"
+            className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-2 py-1 text-xs text-[var(--color-text-primary)] md:text-sm"
           >
             <option value="">All priorities</option>
             {TASK_PRIORITIES.map((p) => (
@@ -45,7 +45,7 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
           <select
             value={searchParams.get("categoryId") ?? ""}
             onChange={(e) => updateURL({ categoryId: e.target.value || null })}
-            className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs md:text-sm"
+            className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-2 py-1 text-xs text-[var(--color-text-primary)] md:text-sm"
           >
             <option value="">All categories</option>
             {categories.map((category) => (
@@ -59,7 +59,7 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
 
       <form className="mt-3 flex gap-2" onSubmit={submitSearch}>
         <input
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-3 py-2 text-sm text-[var(--color-text-primary)]"
           placeholder="Search title, note, owner..."
           name="q"
           ref={queryRef}
@@ -68,7 +68,7 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
         />
         <button
           type="submit"
-          className="rounded-xl bg-slate-900 px-3 text-sm font-semibold text-white"
+          className="rounded-xl bg-[var(--color-accent)] px-3 text-sm font-semibold text-[var(--color-accent-foreground)]"
         >
           Find
         </button>
@@ -78,7 +78,7 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
         <select
           value={searchParams.get("projectId") ?? ""}
           onChange={(e) => updateURL({ projectId: e.target.value || null })}
-          className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs md:text-sm"
+          className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-2 py-1 text-xs text-[var(--color-text-primary)] md:text-sm"
         >
           <option value="">All projects</option>
           {projects.map((project) => (
@@ -91,7 +91,7 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
         <select
           value={searchParams.get("status") ?? ""}
           onChange={(e) => updateURL({ status: e.target.value || null })}
-          className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs md:text-sm"
+          className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-2 py-1 text-xs text-[var(--color-text-primary)] md:text-sm"
         >
           <option value="">All status</option>
           {TASK_STATUSES.map((status) => (
@@ -104,7 +104,7 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
         <select
           value={searchParams.get("due") ?? ""}
           onChange={(e) => updateURL({ due: e.target.value || null })}
-          className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs md:text-sm"
+          className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-2 py-1 text-xs text-[var(--color-text-primary)] md:text-sm"
         >
           <option value="">Any due date</option>
           <option value="today">Due today</option>
@@ -115,7 +115,7 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
         <select
           value={searchParams.get("tag") ?? ""}
           onChange={(e) => updateURL({ tag: e.target.value || null })}
-          className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs md:text-sm"
+          className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-2 py-1 text-xs text-[var(--color-text-primary)] md:text-sm"
         >
           <option value="">All tags</option>
           {tags.map((tag) => (
@@ -139,7 +139,7 @@ export function TaskFilters({ categories, projects, tags, updateURL }: Props) {
               tag: null,
             });
           }}
-          className="rounded-xl border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 md:text-sm"
+          className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-2 py-1 text-xs font-semibold text-[var(--color-text-secondary)] md:text-sm"
         >
           Clear filters
         </button>

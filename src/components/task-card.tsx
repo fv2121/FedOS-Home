@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { TASK_STATUSES, TASK_PRIORITIES } from "@/lib/constants";
 import type { VisibleTaskRow, Category, TaskStatus, PriorityConfig, StatusConfig } from "./dashboard-types";
 
-export type TaskCardMenu = "status" | "priority" | "category";
+export type TaskCardMenu = "status" | "priority" | "category" | "delete";
 
 type Props = {
   task: VisibleTaskRow;
@@ -33,6 +33,11 @@ const PRIORITY_DISPLAY: Record<string, string> = {
 
 function displayStatus(status: TaskStatus) {
   return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function safeColor(color: string | undefined | null, fallback: string): string {
+  if (!color) return fallback;
+  return /^#[0-9a-f]{3,6}$|^rgb\(|^hsl\(/i.test(color) ? color : fallback;
 }
 
 function requiredColor(colors: Record<string, string>, key: string, configName: string) {
@@ -104,9 +109,7 @@ export function TaskCard({
 
   function deleteTask() {
     onOpenMenu(null);
-    if (confirm("Delete this task permanently?")) {
-      void onDelete(task.id);
-    }
+    void onDelete(task.id);
   }
 
   function editTask() {
@@ -131,7 +134,7 @@ export function TaskCard({
         className={clsx(
           "flex h-5 w-5 items-center justify-center rounded-[5px] border-2 transition md:h-4 md:w-4 md:rounded-[4px] md:border",
           isDone
-            ? "border-[var(--color-text-success)] bg-[var(--color-text-success)] text-white"
+            ? "border-[var(--color-text-success)] bg-[var(--color-text-success)] text-[var(--color-accent-foreground)]"
             : "border-[var(--color-line)] bg-transparent text-transparent hover:border-[var(--color-text-success)]",
         )}
       >
@@ -214,7 +217,7 @@ export function TaskCard({
             >
               <span
                 className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: task.category?.color ?? "#5F5E5A" }}
+                style={{ backgroundColor: safeColor(task.category?.color, "#5F5E5A") }}
               />
               <span className="min-w-0 truncate">{task.category?.name ?? "Uncategorized"}</span>
             </button>
@@ -230,7 +233,7 @@ export function TaskCard({
                       "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] hover:bg-[var(--color-surface-secondary)]",
                       category.id === task.category_id ? "font-semibold" : "text-[var(--color-text-primary)]",
                     )}
-                    style={{ color: category.color }}
+                    style={{ color: safeColor(category.color, "inherit") }}
                   >
                     <span className="min-w-0 truncate">{category.name}</span>
                   </button>
@@ -281,15 +284,41 @@ export function TaskCard({
             <Pencil className="h-3.5 w-3.5" />
           </button>
 
-          <button
-            type="button"
-            onClick={deleteTask}
-            className="inline-flex h-7 w-8 items-center justify-center rounded-md border border-[var(--color-line)] bg-[var(--color-surface-primary)] text-[var(--color-text-tertiary)] shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700"
-            aria-label={`Delete ${task.title}`}
-            title="Delete"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => onOpenMenu(openMenu === "delete" ? null : "delete")}
+              className="inline-flex h-7 w-8 items-center justify-center rounded-md border border-[var(--color-line)] bg-[var(--color-surface-primary)] text-[var(--color-text-tertiary)] shadow-sm transition hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-danger)]"
+              aria-label={`Delete ${task.title}`}
+              title="Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+
+            {openMenu === "delete" && (
+              <Popover title="Delete task">
+                <p className="mb-2 px-1 text-[12px] text-[var(--color-text-secondary)]">
+                  Delete permanently?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onOpenMenu(null)}
+                    className="flex-1 rounded-md border border-[var(--color-line)] px-2 py-1.5 text-[12px] font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-secondary)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={deleteTask}
+                    className="flex-1 rounded-md bg-[var(--color-text-danger)] px-2 py-1.5 text-[12px] font-semibold text-[var(--color-accent-foreground)] transition hover:opacity-90"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </Popover>
+            )}
+          </div>
         </div>
 
       </div>

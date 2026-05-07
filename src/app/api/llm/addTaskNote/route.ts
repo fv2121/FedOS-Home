@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { addTaskNoteSchema, eventActorSchema } from "@/lib/validators";
 import { addTaskNote } from "@/lib/task-service";
-import { fail, ok } from "@/lib/http";
-import { requireJson } from "@/lib/route-helpers";
+import { ok } from "@/lib/http";
+import { failFromError, requireJson } from "@/lib/route-helpers";
 
 const schema = z
   .object({ id: z.string().min(1), actor: eventActorSchema })
@@ -17,6 +17,6 @@ export async function POST(request: NextRequest) {
     const result = await addTaskNote(parsed.data.id, parsed.data.note, parsed.data.actor);
     return ok(result);
   } catch (error) {
-    return fail("addTaskNote failed", 500, String(error));
+    return failFromError("addTaskNote", error);
   }
 }

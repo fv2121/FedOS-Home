@@ -1,33 +1,21 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
-  type ComponentType,
   type FormEvent,
-  type RefObject,
-  type ReactNode,
 } from "react";
 import { format } from "date-fns";
 import clsx from "clsx";
 import {
-  Bold,
   CalendarDays,
-  ChevronDown,
   Clock,
-  Eye,
   FileText,
   Hash,
-  Heading1,
-  Heading2,
-  Italic,
   Link as LinkIcon,
-  Link2,
-  List,
-  ListOrdered,
-  PencilLine,
   Save,
   Tags,
   X,
@@ -49,6 +37,19 @@ import type {
   TaskUpdateFields,
   VisibleTaskRow,
 } from "./dashboard-types";
+import { MarkdownPreview } from "./task-description-markdown";
+import {
+  DescriptionEditor,
+  type DescriptionMode,
+  Field,
+  MetadataRow,
+  MobileFlatRow,
+  MobileSection,
+  MobileSelectRow,
+  MobileTabs,
+  Section,
+  SelectShell,
+} from "./task-edit-form-fields";
 
 type Props = {
   task: VisibleTaskRow;
@@ -72,8 +73,6 @@ type Draft = {
   source_ref: string;
   tags: string;
 };
-
-type DescriptionMode = "write" | "preview";
 
 const PRIORITY_DISPLAY: Record<TaskPriority, string> = {
   low: "Low",
@@ -118,23 +117,45 @@ export function TaskEditOverlay({
   onClose,
   onSave,
 }: Props) {
-  const [draft, setDraft] = useState<Draft>(() => draftFromTask(task));
+  const [initialDraft] = useState<Draft>(() => draftFromTask(task));
+  const [draft, setDraft] = useState<Draft>(initialDraft);
   const [descriptionMode, setDescriptionMode] = useState<DescriptionMode>(() =>
     task.description?.trim() ? "preview" : "write",
   );
   const [saving, setSaving] = useState(false);
+  const [closeConfirmationOpen, setCloseConfirmationOpen] = useState(false);
   const mobileTitleRef = useRef<HTMLTextAreaElement>(null);
   const mobileDescriptionRef = useRef<HTMLTextAreaElement>(null);
+  const desktopTitleRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const statusColorMap = Object.fromEntries(statusConfigs.map((c) => [c.status, c.color]));
   const priorityColorMap = Object.fromEntries(priorityConfigs.map((c) => [c.priority, c.color]));
+  const hasUnsavedChanges = !draftsAreEqual(draft, initialDraft);
+
+  const requestClose = useCallback(() => {
+    if (saving) return;
+    if (hasUnsavedChanges) {
+      setCloseConfirmationOpen(true);
+      return;
+    }
+
+    onClose();
+  }, [hasUnsavedChanges, onClose, saving]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (closeConfirmationOpen) {
+          setCloseConfirmationOpen(false);
+          return;
+        }
+
+        requestClose();
+      }
     }
 
     document.addEventListener("keydown", closeOnEscape);
@@ -142,7 +163,20 @@ export function TaskEditOverlay({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [onClose]);
+  }, [closeConfirmationOpen, requestClose]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        desktopTitleRef.current?.focus();
+        return;
+      }
+
+      mobileTitleRef.current?.focus();
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   useLayoutEffect(() => {
     const textarea = mobileTitleRef.current;
@@ -227,6 +261,7 @@ export function TaskEditOverlay({
         aria-modal="true"
         aria-labelledby="mobile-task-edit-title"
         onSubmit={handleSubmit}
+        onKeyDown={trapDialogFocus}
         className="fixed inset-0 z-50 flex flex-col bg-[var(--color-app-bg)] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+1rem)] md:hidden"
       >
         <div className="mb-2 flex min-h-10 items-center justify-end">
@@ -235,7 +270,7 @@ export function TaskEditOverlay({
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={saving}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
             aria-label="Close task editor"
@@ -463,7 +498,7 @@ export function TaskEditOverlay({
     <div
       className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 p-3 backdrop-blur-sm md:flex md:p-6"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving) onClose();
+        if (event.target === event.currentTarget) requestClose();
       }}
     >
       <form
@@ -471,6 +506,7 @@ export function TaskEditOverlay({
         aria-modal="true"
         aria-labelledby="task-edit-title"
         onSubmit={handleSubmit}
+        onKeyDown={trapDialogFocus}
         className="flex max-h-[calc(100vh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)] shadow-2xl md:max-h-[calc(100vh-3rem)]"
       >
         <header className="flex items-start justify-between gap-4 border-b border-[var(--color-line)] px-4 py-4 md:px-6">
@@ -487,7 +523,7 @@ export function TaskEditOverlay({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={saving}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
             aria-label="Close task editor"
@@ -503,6 +539,7 @@ export function TaskEditOverlay({
                 <div className="space-y-4">
                   <Field label="Title">
                     <input
+                      ref={desktopTitleRef}
                       value={draft.title}
                       maxLength={200}
                       required
@@ -706,7 +743,7 @@ export function TaskEditOverlay({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               disabled={saving}
               className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[var(--color-line)] px-4 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
             >
@@ -725,417 +762,91 @@ export function TaskEditOverlay({
         </footer>
       </form>
     </div>
+
+      {closeConfirmationOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="discard-changes-title"
+            aria-describedby="discard-changes-description"
+            onKeyDown={trapDialogFocus}
+            className="w-full max-w-sm rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-5 shadow-2xl"
+          >
+            <h2 id="discard-changes-title" className="text-base font-semibold text-[var(--color-text-primary)]">
+              Discard changes?
+            </h2>
+            <p id="discard-changes-description" className="mt-2 text-sm text-[var(--color-text-secondary)]">
+              Your unsaved task edits will be lost.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setCloseConfirmationOpen(false)}
+                className="rounded-lg border border-[var(--color-line)] px-3 py-2 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-secondary)]"
+              >
+                Keep editing
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg bg-[var(--color-text-danger)] px-3 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] transition hover:opacity-90"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
-function MobileSection({ title, children }: { title: string; children: ReactNode }) {
+function draftsAreEqual(a: Draft, b: Draft): boolean {
   return (
-    <section className="space-y-2">
-      <div className="flex min-h-7 items-center gap-2">
-        <h3 className="text-sm font-medium uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">
-          {title}
-        </h3>
-        <span className="h-px flex-1 bg-[var(--color-line)]" />
-      </div>
-      {children}
-    </section>
+    a.title === b.title &&
+    a.description === b.description &&
+    a.status === b.status &&
+    a.priority === b.priority &&
+    a.category_id === b.category_id &&
+    a.project_id === b.project_id &&
+    a.due_at === b.due_at &&
+    a.source_type === b.source_type &&
+    a.source_ref === b.source_ref &&
+    a.tags === b.tags
   );
 }
 
-function MobileTabs({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-4 border-b border-[var(--color-line)]">{children}</div>;
-}
+function trapDialogFocus(event: React.KeyboardEvent<HTMLElement>) {
+  if (event.key !== "Tab") return;
 
-function MobileFlatRow({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex min-h-12 items-center border-b border-[var(--color-line)] py-3 text-[var(--color-text-secondary)]">
-      {children}
-    </div>
-  );
-}
+  const focusable = getFocusableElements(event.currentTarget);
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (!first || !last) return;
 
-function MobileSelectRow({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative flex min-h-12 items-center border-b border-[var(--color-line)] py-3 text-[var(--color-text-secondary)]">
-      {children}
-      <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-[var(--color-text-secondary)]" />
-    </div>
-  );
-}
-
-function Section({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: ComponentType<{ className?: string }>;
-  children: ReactNode;
-}) {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-[var(--color-text-tertiary)]" />
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">
-          {title}
-        </h3>
-        <span className="h-px flex-1 bg-[var(--color-line)]" />
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block space-y-1.5">
-      <span className="text-xs font-semibold text-[var(--color-text-secondary)]">{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function DescriptionEditor({
-  mode,
-  value,
-  textareaRef,
-  onModeChange,
-  onChange,
-  onBold,
-  onItalic,
-  onLink,
-  onHeading1,
-  onHeading2,
-  onBulletList,
-  onNumberedList,
-}: {
-  mode: DescriptionMode;
-  value: string;
-  textareaRef: RefObject<HTMLTextAreaElement | null>;
-  onModeChange: (mode: DescriptionMode) => void;
-  onChange: (value: string) => void;
-  onBold: () => void;
-  onItalic: () => void;
-  onLink: () => void;
-  onHeading1: () => void;
-  onHeading2: () => void;
-  onBulletList: () => void;
-  onNumberedList: () => void;
-}) {
-  return (
-    <div className="block space-y-1.5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-[var(--color-text-secondary)]">Description</span>
-        <div className="grid grid-cols-2 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-0.5">
-          <button
-            type="button"
-            aria-pressed={mode === "write"}
-            onClick={() => onModeChange("write")}
-            className={clsx(
-              "inline-flex h-7 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-semibold transition",
-              mode === "write"
-                ? "bg-[var(--color-text-primary)] text-[var(--color-surface-primary)]"
-                : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)]",
-            )}
-          >
-            <PencilLine className="h-3.5 w-3.5" />
-            Write
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "preview"}
-            onClick={() => onModeChange("preview")}
-            className={clsx(
-              "inline-flex h-7 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-semibold transition",
-              mode === "preview"
-                ? "bg-[var(--color-text-primary)] text-[var(--color-surface-primary)]"
-                : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)]",
-            )}
-          >
-            <Eye className="h-3.5 w-3.5" />
-            Preview
-          </button>
-        </div>
-      </div>
-
-      {mode === "write" ? (
-        <div className="overflow-hidden rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-primary)] focus-within:border-[var(--color-text-primary)]">
-          <div className="flex flex-wrap items-center gap-1 border-b border-[var(--color-line)] bg-[var(--color-surface-secondary)] px-2 py-1.5">
-            <EditorButton label="Heading 1" onClick={onHeading1} icon={Heading1} />
-            <EditorButton label="Heading 2" onClick={onHeading2} icon={Heading2} />
-            <EditorButton label="Bold" onClick={onBold} icon={Bold} />
-            <EditorButton label="Italic" onClick={onItalic} icon={Italic} />
-            <EditorButton label="Link" onClick={onLink} icon={Link2} />
-            <EditorButton label="Bulleted list" onClick={onBulletList} icon={List} />
-            <EditorButton label="Numbered list" onClick={onNumberedList} icon={ListOrdered} />
-          </div>
-          <textarea
-            ref={textareaRef}
-            value={value}
-            maxLength={TASK_DESCRIPTION_MAX_LENGTH}
-            rows={8}
-            onChange={(event) => onChange(event.target.value)}
-            className="block min-h-48 w-full resize-y bg-transparent px-3 py-2 text-sm leading-relaxed text-[var(--color-text-primary)] outline-none"
-          />
-        </div>
-      ) : (
-        <div className="min-h-48 rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-3 py-3">
-          <MarkdownPreview value={value} />
-        </div>
-      )}
-      <div className="text-right text-[11px] font-medium text-[var(--color-text-tertiary)]">
-        {value.length}/{TASK_DESCRIPTION_MAX_LENGTH}
-      </div>
-    </div>
-  );
-}
-
-function EditorButton({
-  label,
-  onClick,
-  icon: Icon,
-}: {
-  label: string;
-  onClick: () => void;
-  icon: ComponentType<{ className?: string }>;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-primary)] hover:text-[var(--color-text-primary)]"
-    >
-      <Icon className="h-3.5 w-3.5" />
-    </button>
-  );
-}
-
-function MarkdownPreview({ value }: { value: string }) {
-  const blocks = parseMarkdownBlocks(value);
-
-  if (blocks.length === 0) {
-    return <p className="text-sm text-[var(--color-text-tertiary)]">No description</p>;
+  const active = document.activeElement;
+  if (event.shiftKey) {
+    if (active === first || !event.currentTarget.contains(active)) {
+      event.preventDefault();
+      last.focus();
+    }
+    return;
   }
 
-  return (
-    <div className="space-y-3 text-sm leading-relaxed text-[var(--color-text-primary)]">
-      {blocks.map((block, index) => {
-        if (block.type === "heading") {
-          const HeadingTag = block.level === 1 ? "h2" : block.level === 2 ? "h3" : "h4";
-          return (
-            <HeadingTag key={index} className="font-semibold leading-tight text-[var(--color-text-primary)]">
-              {renderInlineMarkdown(block.text)}
-            </HeadingTag>
-          );
-        }
-
-        if (block.type === "quote") {
-          return (
-            <blockquote
-              key={index}
-              className="border-l-2 border-[var(--color-line)] pl-3 text-[var(--color-text-secondary)]"
-            >
-              {block.lines.map((line, lineIndex) => (
-                <p key={lineIndex}>{renderInlineMarkdown(line)}</p>
-              ))}
-            </blockquote>
-          );
-        }
-
-        if (block.type === "ul") {
-          return (
-            <ul key={index} className="list-disc space-y-1 pl-5">
-              {block.items.map((item, itemIndex) => (
-                <li key={itemIndex}>{renderInlineMarkdown(item)}</li>
-              ))}
-            </ul>
-          );
-        }
-
-        if (block.type === "ol") {
-          return (
-            <ol key={index} className="list-decimal space-y-1 pl-5">
-              {block.items.map((item, itemIndex) => (
-                <li key={itemIndex}>{renderInlineMarkdown(item)}</li>
-              ))}
-            </ol>
-          );
-        }
-
-        if (block.type === "paragraph") {
-          return <p key={index}>{renderInlineMarkdown(block.text)}</p>;
-        }
-
-        return null;
-      })}
-    </div>
-  );
-}
-
-type MarkdownBlock =
-  | { type: "heading"; level: 1 | 2 | 3; text: string }
-  | { type: "paragraph"; text: string }
-  | { type: "quote"; lines: string[] }
-  | { type: "ul" | "ol"; items: string[] };
-
-function parseMarkdownBlocks(value: string): MarkdownBlock[] {
-  const lines = value.replace(/\r\n/g, "\n").split("\n");
-  const blocks: MarkdownBlock[] = [];
-  let index = 0;
-
-  while (index < lines.length) {
-    const line = lines[index];
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      index += 1;
-      continue;
-    }
-
-    const heading = /^(#{1,3})\s+(.+)$/.exec(trimmed);
-    if (heading) {
-      blocks.push({
-        type: "heading",
-        level: heading[1].length as 1 | 2 | 3,
-        text: heading[2],
-      });
-      index += 1;
-      continue;
-    }
-
-    if (/^[-*]\s+/.test(trimmed)) {
-      const items: string[] = [];
-      while (index < lines.length && /^[-*]\s+/.test(lines[index].trim())) {
-        items.push(lines[index].trim().replace(/^[-*]\s+/, ""));
-        index += 1;
-      }
-      blocks.push({ type: "ul", items });
-      continue;
-    }
-
-    if (/^\d+\.\s+/.test(trimmed)) {
-      const items: string[] = [];
-      while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) {
-        items.push(lines[index].trim().replace(/^\d+\.\s+/, ""));
-        index += 1;
-      }
-      blocks.push({ type: "ol", items });
-      continue;
-    }
-
-    if (/^>\s?/.test(trimmed)) {
-      const quoteLines: string[] = [];
-      while (index < lines.length && /^>\s?/.test(lines[index].trim())) {
-        quoteLines.push(lines[index].trim().replace(/^>\s?/, ""));
-        index += 1;
-      }
-      blocks.push({ type: "quote", lines: quoteLines });
-      continue;
-    }
-
-    const paragraphLines: string[] = [];
-    while (index < lines.length && lines[index].trim() && !isMarkdownBlockStart(lines[index])) {
-      paragraphLines.push(lines[index].trim());
-      index += 1;
-    }
-    blocks.push({ type: "paragraph", text: paragraphLines.join(" ") });
+  if (active === last) {
+    event.preventDefault();
+    first.focus();
   }
-
-  return blocks;
 }
 
-function isMarkdownBlockStart(line: string): boolean {
-  const trimmed = line.trim();
-  return /^(#{1,3})\s+/.test(trimmed) || /^[-*]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed) || /^>\s?/.test(trimmed);
-}
-
-function renderInlineMarkdown(text: string): ReactNode[] {
-  const nodes: ReactNode[] = [];
-  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = pattern.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(text.slice(lastIndex, match.index));
-    }
-
-    const token = match[0];
-    const key = `${match.index}-${token}`;
-
-    if (token.startsWith("**") && token.endsWith("**")) {
-      nodes.push(<strong key={key}>{token.slice(2, -2)}</strong>);
-    } else if (token.startsWith("*") && token.endsWith("*")) {
-      nodes.push(<em key={key}>{token.slice(1, -1)}</em>);
-    } else if (token.startsWith("`") && token.endsWith("`")) {
-      nodes.push(
-        <code
-          key={key}
-          className="rounded border border-[var(--color-line)] bg-[var(--color-surface-secondary)] px-1 py-0.5 font-mono text-[0.85em]"
-        >
-          {token.slice(1, -1)}
-        </code>,
-      );
-    } else {
-      const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token);
-      const href = link?.[2] ?? "";
-      if (link && isSafePreviewHref(href)) {
-        nodes.push(
-          <a
-            key={key}
-            href={href}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-sky-700 underline decoration-sky-300 underline-offset-2"
-          >
-            {link[1]}
-          </a>,
-        );
-      } else {
-        nodes.push(token);
-      }
-    }
-
-    lastIndex = pattern.lastIndex;
-  }
-
-  if (lastIndex < text.length) {
-    nodes.push(text.slice(lastIndex));
-  }
-
-  return nodes;
-}
-
-function isSafePreviewHref(href: string): boolean {
-  return /^(https?:\/\/|mailto:)/i.test(href);
-}
-
-function SelectShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative">
-      {children}
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
-    </div>
-  );
-}
-
-function MetadataRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-3 border-b border-[var(--color-line)] pb-2 last:border-b-0 last:pb-0">
-      <dt className="text-xs font-semibold text-[var(--color-text-tertiary)]">{label}</dt>
-      <dd
-        className={clsx(
-          "min-w-0 break-words text-[var(--color-text-primary)]",
-          mono && "font-mono text-xs",
-        )}
-      >
-        {value}
-      </dd>
-    </div>
-  );
+function getFocusableElements(root: HTMLElement): HTMLElement[] {
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => element.getClientRects().length > 0);
 }
 
 function toDateInput(value: string | Date | null): string {

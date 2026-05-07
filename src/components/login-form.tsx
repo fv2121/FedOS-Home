@@ -38,32 +38,32 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-sm rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0_30px_60px_-30px_rgba(15,23,42,0.35)] backdrop-blur">
-      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">FedOS Tasks</p>
-      <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-900">Sign in</h1>
-      <p className="mt-2 text-sm text-slate-600">
+    <div className="mx-auto w-full max-w-sm rounded-3xl border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[0_30px_60px_-30px_rgba(15,23,42,0.35)] backdrop-blur">
+      <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">FedOS Tasks</p>
+      <h1 className="mt-3 text-2xl font-black tracking-tight text-[var(--color-text-primary)]">Sign in</h1>
+      <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
         Single-user gate for your personal task execution workspace.
       </p>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <label className="block text-sm font-medium text-slate-700" htmlFor="password">
+        <label className="block text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="password">
           Password
         </label>
         <input
           id="password"
           type="password"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-amber-200 transition focus:ring"
+          className="w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none transition focus:ring focus:ring-[color-mix(in_srgb,var(--color-accent)_35%,transparent)]"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-[var(--color-text-danger)]">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-accent-foreground)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
