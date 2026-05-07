@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { endOfDay, startOfDay, addDays, format, isAfter, isBefore, isEqual } from "date-fns";
 import { useSearchParams } from "next/navigation";
-import { CalendarDays, ChevronDown, FolderKanban, Signal, Tags, X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import clsx from "clsx";
 import { isViewOption, TASK_PRIORITIES } from "@/lib/constants";
 import {
@@ -34,10 +34,10 @@ type ListGroup = "date" | "priority" | "category" | "project";
 type OpenTaskMenu = { taskId: string; menu: TaskCardMenu } | null;
 
 const LIST_GROUP_OPTIONS = [
-  { id: "date", label: "By date", mobileLabel: "date", icon: CalendarDays },
-  { id: "priority", label: "By priority", mobileLabel: "priority", icon: Signal },
-  { id: "category", label: "By category", mobileLabel: "category", icon: Tags },
-  { id: "project", label: "By project", mobileLabel: "project", icon: FolderKanban },
+  { id: "date", label: "By date", mobileLabel: "date" },
+  { id: "priority", label: "By priority", mobileLabel: "priority" },
+  { id: "category", label: "By category", mobileLabel: "category" },
+  { id: "project", label: "By project", mobileLabel: "project" },
 ] as const;
 
 export function TaskDashboard({ initialTasks, categories, projects, priorityConfigs, statusConfigs }: Props) {
@@ -174,7 +174,7 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
 
   return (
     <div className="min-h-screen bg-[var(--color-app-bg)] pb-28 md:pb-10">
-      <div className="mx-auto w-full max-w-6xl p-3 md:p-6">
+      <div className="mx-auto w-full max-w-6xl px-3 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)] md:p-6">
         <main className="space-y-4">
           <section className="hidden rounded-3xl bg-[var(--color-panel)] p-5 shadow-sm backdrop-blur md:block md:p-10">
             <CreateTaskPanel categories={categories} projects={projects} onCreateTask={createTask} />
@@ -184,7 +184,6 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
             <div className="mb-5 md:mb-3">
               <div className="grid grid-cols-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-1 max-md:w-full">
                 {LIST_GROUP_OPTIONS.map((option) => {
-                  const Icon = option.icon;
                   const active = listGroup === option.id;
 
                   return (
@@ -196,13 +195,12 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
                         updateURL({ groupBy: option.id === "date" ? null : option.id });
                       }}
                       className={clsx(
-                        "flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold transition sm:px-3 sm:text-xs max-md:min-h-12 max-md:gap-2 max-md:text-xl",
+                        "flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold transition sm:px-3 sm:text-xs max-md:min-h-12 max-md:gap-2 max-md:text-base",
                         active
                           ? "bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
                           : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)]",
                       )}
                     >
-                      <Icon className="h-3.5 w-3.5 shrink-0 max-md:h-5 max-md:w-5" />
                       <span className="md:hidden">{option.mobileLabel}</span>
                       <span className="hidden md:inline">{option.label}</span>
                     </button>
@@ -342,7 +340,7 @@ function SectionHeader({
           className={clsx("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
         />
       </button>
-      <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--color-accent)] max-md:text-sm">
+      <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--color-text-tertiary)] max-md:text-sm">
         {name}
       </h3>
       <span className="text-[11px] text-[var(--color-text-tertiary)] max-md:text-xs">({count})</span>

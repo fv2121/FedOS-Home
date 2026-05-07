@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ComponentType, type FormEvent } from "react";
 import { addDays, format } from "date-fns";
 import clsx from "clsx";
-import { CalendarDays, ChevronDown, FolderKanban, Plus, Tags } from "lucide-react";
+import { ChevronDown, FolderKanban, Plus, Tags } from "lucide-react";
 import { TASK_DESCRIPTION_MAX_LENGTH, TASK_PRIORITIES } from "@/lib/constants";
 import type { Category, Project } from "./dashboard-types";
 
@@ -86,19 +86,21 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
       className="fixed inset-x-0 top-0 z-10 flex flex-col bg-[var(--color-app-bg)] md:hidden"
       style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
     >
-      <form onSubmit={handleSubmit} className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col p-3">
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-3">
-          <section className="space-y-1">
-            <SectionHeader name="Task" />
-            <div className="space-y-1">
+      <form
+        onSubmit={handleSubmit}
+        className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-3 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)]"
+      >
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4">
+          <section>
+            <div>
               <input
                 ref={titleRef}
                 aria-label="Task title"
                 type="text"
-                placeholder="Title..."
+                placeholder="Add a new task..."
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="block min-h-12 w-full rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-base font-medium text-[var(--color-text-primary)] outline-none transition placeholder:text-[var(--color-text-tertiary)] focus:bg-[var(--color-surface-secondary)]"
+                className="block min-h-12 w-full bg-transparent py-3 text-lg font-medium text-[var(--color-text-primary)] outline-none transition placeholder:text-2xl placeholder:font-bold placeholder:italic placeholder:text-[var(--color-text-tertiary)]"
               />
               <textarea
                 aria-label="Task description"
@@ -106,15 +108,15 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
                 placeholder="Description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                rows={4}
-                className="block w-full resize-none rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-sm text-[var(--color-text-secondary)] outline-none transition placeholder:text-[var(--color-text-tertiary)] focus:bg-[var(--color-surface-secondary)]"
+                rows={8}
+                className="block min-h-40 w-full resize-none bg-transparent py-3 text-base text-[var(--color-text-secondary)] outline-none transition placeholder:text-[var(--color-text-tertiary)]"
               />
             </div>
           </section>
 
-          <section className="space-y-1">
+          <section className="space-y-2">
             <SectionHeader name="When" />
-            <div className="grid grid-cols-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-1">
+            <div className="grid grid-cols-4 border-b border-[var(--color-line)]">
               {DUE_DATE_PRESETS.map((preset) => {
                 const selected = selectedDuePreset === preset.dueDate;
 
@@ -128,10 +130,10 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
                       setDueAt(presetDueDate(preset.dueDate));
                     }}
                     className={clsx(
-                      "flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition",
+                      "flex min-h-11 items-center justify-center border-b-2 px-2 text-base font-semibold transition",
                       selected
-                        ? "bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
-                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)]",
+                        ? "border-[var(--color-accent)] text-[var(--color-accent)]"
+                        : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
                     )}
                   >
                     {preset.label}
@@ -139,7 +141,7 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
                 );
               })}
             </div>
-            <IconInput icon={CalendarDays}>
+            <FlatInputRow>
               <input
                 aria-label="Due date"
                 type="date"
@@ -148,14 +150,14 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
                   setSelectedDuePreset(null);
                   setDueAt(event.target.value);
                 }}
-                className="date-input-compact w-full bg-transparent text-sm font-medium text-[var(--color-text-secondary)] outline-none"
+                className="date-input-compact w-full bg-transparent text-base font-medium text-[var(--color-text-secondary)] outline-none"
               />
-            </IconInput>
+            </FlatInputRow>
           </section>
 
-          <section className="space-y-1">
+          <section className="space-y-2">
             <SectionHeader name="Priority" />
-            <div className="grid grid-cols-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-1">
+            <div className="grid grid-cols-4 border-b border-[var(--color-line)]">
               {TASK_PRIORITIES.map((taskPriority) => {
                 const selected = priority === taskPriority;
 
@@ -166,10 +168,10 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
                     aria-pressed={selected}
                     onClick={() => setPriority(taskPriority)}
                     className={clsx(
-                      "flex min-h-10 items-center justify-center rounded-lg px-2 text-sm font-semibold capitalize transition",
+                      "flex min-h-11 items-center justify-center border-b-2 px-2 text-base font-semibold capitalize transition",
                       selected
-                        ? "bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
-                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)]",
+                        ? "border-[var(--color-accent)] text-[var(--color-accent)]"
+                        : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
                     )}
                   >
                     {taskPriority}
@@ -180,16 +182,16 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
           </section>
 
           {(categories.length > 0 || projects.length > 0) && (
-            <section className="space-y-1">
+            <section className="space-y-2">
               <SectionHeader name="Meta" />
-              <div className="space-y-1">
+              <div>
                 {categories.length > 0 && (
                   <SelectShell icon={Tags}>
                     <select
                       aria-label="Task category"
                       value={categoryId}
                       onChange={(event) => setCategoryId(event.target.value)}
-                      className="w-full appearance-none bg-transparent pr-7 text-sm font-medium text-[var(--color-text-secondary)] outline-none"
+                      className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
                     >
                       <option value="">Category</option>
                       {categories.map((category) => (
@@ -207,7 +209,7 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
                       aria-label="Task project"
                       value={projectId}
                       onChange={(event) => setProjectId(event.target.value)}
-                      className="w-full appearance-none bg-transparent pr-7 text-sm font-medium text-[var(--color-text-secondary)] outline-none"
+                      className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
                     >
                       <option value="">Project</option>
                       {projects.map((project) => (
@@ -223,7 +225,7 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
           )}
         </div>
 
-        <div className="border-t border-[var(--color-line)] pt-3">
+        <div className="pt-3">
           <button
             type="submit"
             disabled={!canSubmit}
@@ -231,7 +233,7 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
               "flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border px-4 py-3 text-base font-bold transition",
               canSubmit
                 ? "border-transparent bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
-                : "cursor-not-allowed border-[var(--color-line)] bg-[var(--color-surface-primary)] text-[var(--color-text-tertiary)]",
+                : "cursor-not-allowed border-[var(--color-line)] bg-transparent text-[var(--color-text-tertiary)]",
             )}
           >
             <Plus className="h-5 w-5 stroke-[3]" />
@@ -246,7 +248,7 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
 function SectionHeader({ name }: { name: string }) {
   return (
     <div className="flex min-h-7 items-center gap-2">
-      <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-[var(--color-accent)]">
+      <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">
         {name}
       </h2>
       <span className="h-px flex-1 bg-[var(--color-line)]" />
@@ -254,16 +256,9 @@ function SectionHeader({ name }: { name: string }) {
   );
 }
 
-function IconInput({
-  icon: Icon,
-  children,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
+function FlatInputRow({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-10 items-center gap-2 rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-[var(--color-text-secondary)]">
-      <Icon className="h-4 w-4 shrink-0 text-[var(--color-text-tertiary)]" />
+    <div className="flex min-h-12 items-center border-b border-[var(--color-line)] py-3 text-[var(--color-text-secondary)]">
       {children}
     </div>
   );
@@ -277,10 +272,10 @@ function SelectShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-10 min-w-0 items-center gap-2 rounded-lg bg-[var(--color-surface-primary)] px-3 py-2 text-[var(--color-text-secondary)]">
+    <div className="relative flex min-h-12 min-w-0 items-center gap-3 border-b border-[var(--color-line)] py-3 text-[var(--color-text-secondary)]">
       <Icon className="h-4 w-4 shrink-0 text-[var(--color-text-tertiary)]" />
       {children}
-      <ChevronDown className="pointer-events-none absolute right-3 h-4 w-4 text-[var(--color-text-secondary)]" />
+      <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-[var(--color-text-secondary)]" />
     </div>
   );
 }
