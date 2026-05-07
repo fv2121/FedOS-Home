@@ -1,4 +1,5 @@
 import { TaskDashboard } from "@/components/task-dashboard";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { listCategories, listProjects, listPriorityConfigs, listStatusConfigs, searchTasks } from "@/lib/task-service";
 
 export const dynamic = "force-dynamic";
@@ -31,12 +32,14 @@ export default async function Home({
   ]);
 
   return (
-    <TaskDashboard
-      initialTasks={tasks}
-      categories={categories}
-      projects={projects}
-      priorityConfigs={priorityConfigs}
-      statusConfigs={statusConfigs}
-    />
+    <ErrorBoundary>
+      <TaskDashboard
+        initialTasks={tasks}
+        categories={categories}
+        projects={projects}
+        priorityConfigs={priorityConfigs}
+        statusConfigs={statusConfigs}
+      />
+    </ErrorBoundary>
   );
 }

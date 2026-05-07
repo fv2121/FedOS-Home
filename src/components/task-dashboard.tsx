@@ -17,6 +17,7 @@ import {
 } from "./dashboard-types";
 import { useTaskActions } from "./use-task-actions";
 import { TaskCard, type TaskCardMenu } from "./task-card";
+import { ErrorBoundary } from "./error-boundary";
 import { TaskEditOverlay } from "./task-edit-overlay";
 import { CreateTaskPanel } from "./create-task-panel";
 import { BottomNav } from "./bottom-nav";
@@ -225,28 +226,29 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
                     {!collapsed && (
                       <div className="space-y-0 md:space-y-1">
                         {[...categoryTasks].sort((a, b) => (a.status === "done" ? 1 : 0) - (b.status === "done" ? 1 : 0)).map((task) => (
-                          <TaskCard
-                            key={task.id}
-                            task={task}
-                            categories={categories}
-                            openMenu={
-                              openTaskMenu?.taskId === task.id ? openTaskMenu.menu : null
-                            }
-                            onOpenMenu={(menu) =>
-                              setOpenTaskMenu(menu ? { taskId: task.id, menu } : null)
-                            }
-                            priorityConfigs={priorityConfigs}
-                            statusConfigs={statusConfigs}
-                            onComplete={complete}
-                            onSetStatus={setStatus}
-                            onSetPriority={setPriority}
-                            onSetCategory={setCategory}
-                            onEdit={(id) => {
-                              setOpenTaskMenu(null);
-                              setEditingTaskId(id);
-                            }}
-                            onDelete={deleteTask}
-                          />
+                          <ErrorBoundary key={task.id}>
+                            <TaskCard
+                              task={task}
+                              categories={categories}
+                              openMenu={
+                                openTaskMenu?.taskId === task.id ? openTaskMenu.menu : null
+                              }
+                              onOpenMenu={(menu) =>
+                                setOpenTaskMenu(menu ? { taskId: task.id, menu } : null)
+                              }
+                              priorityConfigs={priorityConfigs}
+                              statusConfigs={statusConfigs}
+                              onComplete={complete}
+                              onSetStatus={setStatus}
+                              onSetPriority={setPriority}
+                              onSetCategory={setCategory}
+                              onEdit={(id) => {
+                                setOpenTaskMenu(null);
+                                setEditingTaskId(id);
+                              }}
+                              onDelete={deleteTask}
+                            />
+                          </ErrorBoundary>
                         ))}
                       </div>
                     )}

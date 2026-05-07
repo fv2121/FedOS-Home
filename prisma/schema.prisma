@@ -69,6 +69,7 @@ model Task {
   @@index([status])
   @@index([priority])
   @@index([due_at])
+  @@index([created_at])
   @@index([category_id])
   @@index([project_id])
 }
