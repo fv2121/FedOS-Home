@@ -21,10 +21,14 @@ export async function POST(request: NextRequest) {
   const token = createSessionToken();
   const store = await cookies();
 
+  const isHttps =
+    process.env.NODE_ENV === "production" ||
+    request.headers.get("x-forwarded-proto") === "https";
+
   store.set(authCookieName, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: isHttps,
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });

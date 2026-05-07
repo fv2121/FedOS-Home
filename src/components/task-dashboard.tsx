@@ -19,8 +19,8 @@ import { useTaskActions } from "./use-task-actions";
 import { TaskCard, type TaskCardMenu } from "./task-card";
 import { TaskEditOverlay } from "./task-edit-overlay";
 import { CreateTaskPanel } from "./create-task-panel";
-import { QuickAddBar } from "./quick-add-bar";
 import { BottomNav } from "./bottom-nav";
+import { NewTaskView } from "./new-task-view";
 
 type Props = {
   initialTasks: TaskRow[];
@@ -176,11 +176,11 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
     <div className="min-h-screen bg-[var(--color-app-bg)] pb-28 md:pb-10">
       <div className="mx-auto w-full max-w-6xl p-3 md:p-6">
         <main className="space-y-4">
-          <section className="rounded-3xl bg-[var(--color-panel)] p-5 shadow-sm backdrop-blur md:p-10">
+          <section className="hidden rounded-3xl bg-[var(--color-panel)] p-5 shadow-sm backdrop-blur md:block md:p-10">
             <CreateTaskPanel categories={categories} projects={projects} onCreateTask={createTask} />
           </section>
 
-          <section className="rounded-3xl border border-[var(--color-line)] bg-[var(--color-panel)] p-3 shadow-sm backdrop-blur md:p-5">
+          <section className="bg-[var(--color-panel)] p-3 shadow-sm backdrop-blur max-md:bg-transparent max-md:shadow-none md:rounded-3xl md:border md:border-[var(--color-line)] md:p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">Tasks</h2>
               <div className="grid grid-cols-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface-primary)] p-1">
@@ -199,7 +199,7 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
                       className={clsx(
                         "flex min-h-8 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold transition sm:px-3 sm:text-xs",
                         active
-                          ? "bg-[var(--color-text-primary)] text-[var(--color-surface-primary)]"
+                          ? "bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
                           : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)]",
                       )}
                     >
@@ -260,8 +260,16 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
         </main>
       </div>
 
-      <QuickAddBar categories={categories} onCreateTask={createTask} />
-      <BottomNav activeView={view} updateURL={updateURL} />
+<BottomNav activeView={view} updateURL={updateURL} />
+
+      {view === "new" && (
+        <NewTaskView
+          categories={categories}
+          projects={projects}
+          onCreateTask={createTask}
+          onBack={() => updateURL({ view: null })}
+        />
+      )}
 
       {editingTask && (
         <TaskEditOverlay
@@ -334,7 +342,7 @@ function SectionHeader({
           className={clsx("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
         />
       </button>
-      <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--color-text-primary)]">
+      <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--color-accent)]">
         {name}
       </h3>
       <span className="text-[11px] text-[var(--color-text-tertiary)]">({count})</span>

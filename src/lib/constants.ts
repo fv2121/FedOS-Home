@@ -20,6 +20,7 @@ export const ACTOR_TYPES = ["user", "llm", "system"] as const;
 
 export const VIEW_OPTIONS = [
   "home",
+  "new",
   "today",
   "waiting",
   "projects",
