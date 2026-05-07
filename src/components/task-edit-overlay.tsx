@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ComponentType,
@@ -122,6 +123,8 @@ export function TaskEditOverlay({
     task.description?.trim() ? "preview" : "write",
   );
   const [saving, setSaving] = useState(false);
+  const mobileTitleRef = useRef<HTMLTextAreaElement>(null);
+  const mobileDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const statusColorMap = Object.fromEntries(statusConfigs.map((c) => [c.status, c.color]));
   const priorityColorMap = Object.fromEntries(priorityConfigs.map((c) => [c.priority, c.color]));
@@ -140,6 +143,14 @@ export function TaskEditOverlay({
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [onClose]);
+
+  useLayoutEffect(() => {
+    const textarea = mobileTitleRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [draft.title]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -210,8 +221,247 @@ export function TaskEditOverlay({
   }
 
   return (
+    <>
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-task-edit-title"
+        onSubmit={handleSubmit}
+        className="fixed inset-0 z-50 flex flex-col bg-[var(--color-app-bg)] px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-[calc(env(safe-area-inset-top)+1rem)] md:hidden"
+      >
+        <div className="mb-2 flex min-h-10 items-center justify-end">
+          <h2 id="mobile-task-edit-title" className="sr-only">
+            Edit task
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-surface-secondary)] hover:text-[var(--color-text-primary)] disabled:opacity-50"
+            aria-label="Close task editor"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4">
+          <section>
+            <textarea
+              ref={mobileTitleRef}
+              aria-label="Task title"
+              value={draft.title}
+              maxLength={200}
+              required
+              enterKeyHint="next"
+              rows={1}
+              onChange={(event) =>
+                setDraft((prev) => ({ ...prev, title: event.target.value }))
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  setDescriptionMode("write");
+                  requestAnimationFrame(() => {
+                    mobileDescriptionRef.current?.focus();
+                  });
+                }
+              }}
+              className="block min-h-12 w-full resize-none overflow-hidden bg-transparent py-3 text-2xl font-bold leading-tight text-[var(--color-text-primary)] outline-none placeholder:italic placeholder:text-[var(--color-text-tertiary)]"
+              placeholder="Task title..."
+            />
+            <div>
+              <div className="flex justify-end">
+                <div className="grid grid-cols-2 border-b border-[var(--color-line)]">
+                  <button
+                    type="button"
+                    aria-pressed={descriptionMode === "write"}
+                    onClick={() => {
+                      setDescriptionMode("write");
+                      requestAnimationFrame(() => {
+                        mobileDescriptionRef.current?.focus();
+                      });
+                    }}
+                    className={clsx(
+                      "min-h-9 border-b-2 px-4 text-sm font-semibold capitalize transition",
+                      descriptionMode === "write"
+                        ? "border-[var(--color-accent)] text-[var(--color-accent)]"
+                        : "border-transparent text-[var(--color-text-secondary)]",
+                    )}
+                  >
+                    write
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={descriptionMode === "preview"}
+                    onClick={() => setDescriptionMode("preview")}
+                    className={clsx(
+                      "min-h-9 border-b-2 px-4 text-sm font-semibold capitalize transition",
+                      descriptionMode === "preview"
+                        ? "border-[var(--color-accent)] text-[var(--color-accent)]"
+                        : "border-transparent text-[var(--color-text-secondary)]",
+                    )}
+                  >
+                    preview
+                  </button>
+                </div>
+              </div>
+              {descriptionMode === "write" ? (
+                <textarea
+                  ref={mobileDescriptionRef}
+                  aria-label="Task description"
+                  value={draft.description}
+                  maxLength={TASK_DESCRIPTION_MAX_LENGTH}
+                  rows={8}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, description: event.target.value }))
+                  }
+                  className="block min-h-44 w-full resize-none bg-transparent py-3 text-base leading-relaxed text-[var(--color-text-secondary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
+                  placeholder="Description"
+                />
+              ) : (
+                <div className="min-h-44 py-3">
+                  <MarkdownPreview value={draft.description} />
+                </div>
+              )}
+            </div>
+          </section>
+
+          <MobileSection title="When">
+            <MobileFlatRow>
+              <input
+                aria-label="Due date"
+                type="date"
+                value={draft.due_at}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, due_at: event.target.value }))
+                }
+                className="date-input-compact w-full bg-transparent text-base font-medium text-[var(--color-text-secondary)] outline-none"
+              />
+            </MobileFlatRow>
+          </MobileSection>
+
+          <MobileSection title="Status">
+            <MobileTabs>
+              {TASK_STATUSES.map((status) => {
+                const selected = draft.status === status;
+
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setDraft((prev) => ({ ...prev, status }))}
+                    className={clsx(
+                      "flex min-h-11 items-center justify-center border-b-2 px-1 text-base font-semibold capitalize transition",
+                      selected
+                        ? "border-[var(--color-accent)] text-[var(--color-accent)]"
+                        : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
+                    )}
+                  >
+                    {displayCode(status)}
+                  </button>
+                );
+              })}
+            </MobileTabs>
+          </MobileSection>
+
+          <MobileSection title="Priority">
+            <MobileTabs>
+              {TASK_PRIORITIES.map((priority) => {
+                const selected = draft.priority === priority;
+
+                return (
+                  <button
+                    key={priority}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setDraft((prev) => ({ ...prev, priority }))}
+                    className={clsx(
+                      "flex min-h-11 items-center justify-center border-b-2 px-1 text-base font-semibold capitalize transition",
+                      selected
+                        ? "border-[var(--color-accent)] text-[var(--color-accent)]"
+                        : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
+                    )}
+                  >
+                    {priority}
+                  </button>
+                );
+              })}
+            </MobileTabs>
+          </MobileSection>
+
+          <MobileSection title="Meta">
+            <div>
+              {categories.length > 0 && (
+                <MobileSelectRow>
+                  <select
+                    aria-label="Task category"
+                    value={draft.category_id}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, category_id: event.target.value }))
+                    }
+                    className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </MobileSelectRow>
+              )}
+
+              {projects.length > 0 && (
+                <MobileSelectRow>
+                  <select
+                    aria-label="Task project"
+                    value={draft.project_id}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, project_id: event.target.value }))
+                    }
+                    className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
+                  >
+                    <option value="">No project</option>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </MobileSelectRow>
+              )}
+
+              <MobileFlatRow>
+                <input
+                  aria-label="Task tags"
+                  value={draft.tags}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, tags: event.target.value }))
+                  }
+                  placeholder="Tags"
+                  className="w-full bg-transparent text-base font-medium text-[var(--color-text-secondary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
+                />
+              </MobileFlatRow>
+            </div>
+          </MobileSection>
+        </div>
+
+        <button
+          type="submit"
+          disabled={!draft.title.trim() || saving}
+          className={clsx(
+            "flex min-h-12 w-full items-center justify-center rounded-lg border px-4 py-3 text-base font-bold transition",
+            draft.title.trim() && !saving
+              ? "border-transparent bg-[var(--color-accent)] text-[var(--color-surface-primary)]"
+              : "cursor-not-allowed border-[var(--color-line)] bg-transparent text-[var(--color-text-tertiary)]",
+          )}
+        >
+          {saving ? "Saving..." : "Save changes"}
+        </button>
+      </form>
+
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-3 backdrop-blur-sm md:p-6"
+      className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 p-3 backdrop-blur-sm md:flex md:p-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !saving) onClose();
       }}
@@ -474,6 +724,42 @@ export function TaskEditOverlay({
           </div>
         </footer>
       </form>
+    </div>
+    </>
+  );
+}
+
+function MobileSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-2">
+      <div className="flex min-h-7 items-center gap-2">
+        <h3 className="text-sm font-medium uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">
+          {title}
+        </h3>
+        <span className="h-px flex-1 bg-[var(--color-line)]" />
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function MobileTabs({ children }: { children: ReactNode }) {
+  return <div className="grid grid-cols-4 border-b border-[var(--color-line)]">{children}</div>;
+}
+
+function MobileFlatRow({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-12 items-center border-b border-[var(--color-line)] py-3 text-[var(--color-text-secondary)]">
+      {children}
+    </div>
+  );
+}
+
+function MobileSelectRow({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative flex min-h-12 items-center border-b border-[var(--color-line)] py-3 text-[var(--color-text-secondary)]">
+      {children}
+      <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-[var(--color-text-secondary)]" />
     </div>
   );
 }
@@ -825,17 +1111,6 @@ function renderInlineMarkdown(text: string): ReactNode[] {
 
 function isSafePreviewHref(href: string): boolean {
   return /^(https?:\/\/|mailto:)/i.test(href);
-}
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="block space-y-1.5">
-      <span className="text-xs font-semibold text-[var(--color-text-secondary)]">{label}</span>
-      <div className="min-h-10 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-secondary)] px-3 py-2 text-sm font-medium text-[var(--color-text-primary)]">
-        {value || "Not set"}
-      </div>
-    </div>
-  );
 }
 
 function SelectShell({ children }: { children: ReactNode }) {

@@ -100,6 +100,15 @@ body {
   .border-rose-200 { border-color: rgba(248, 113, 113, 0.25) !important; }
   .text-rose-700   { color: #f87171 !important; }
 
+  .date-input-compact {
+    color-scheme: dark;
+  }
+
+  .date-input-compact::-webkit-calendar-picker-indicator {
+    filter: invert(72%);
+    opacity: 0.95;
+  }
+
   /* scrollbar */
   * { scrollbar-color: #3a3a44 #1c1c24; }
   *::-webkit-scrollbar-thumb { background: #3a3a44; }

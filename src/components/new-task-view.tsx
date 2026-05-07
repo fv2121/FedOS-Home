@@ -51,6 +51,7 @@ function presetDueDate(dueDate: DueDatePreset) {
 
 export function NewTaskView({ categories, projects, onCreateTask, onBack }: Props) {
   const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedDuePreset, setSelectedDuePreset] = useState<DueDatePreset | null>("today");
@@ -98,11 +99,19 @@ export function NewTaskView({ categories, projects, onCreateTask, onBack }: Prop
                 aria-label="Task title"
                 type="text"
                 placeholder="Add a new task..."
+                enterKeyHint="next"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    descriptionRef.current?.focus();
+                  }
+                }}
                 className="block min-h-12 w-full bg-transparent py-3 text-lg font-medium text-[var(--color-text-primary)] outline-none transition placeholder:text-2xl placeholder:font-bold placeholder:italic placeholder:text-[var(--color-text-tertiary)]"
               />
               <textarea
+                ref={descriptionRef}
                 aria-label="Task description"
                 maxLength={TASK_DESCRIPTION_MAX_LENGTH}
                 placeholder="Description"
