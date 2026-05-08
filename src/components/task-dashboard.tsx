@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { endOfDay, startOfDay, addDays, format, getISOWeek, isAfter, isBefore, isEqual } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, X } from "lucide-react";
@@ -19,6 +19,8 @@ import { useTaskActions } from "./use-task-actions";
 import { TaskCard, type TaskCardMenu } from "./task-card";
 import { ErrorBoundary } from "./error-boundary";
 import { TaskEditOverlay } from "./task-edit-overlay";
+import { TaskActionSheet } from "./task-action-sheet";
+import { UndoToast } from "./undo-toast";
 import { CreateTaskPanel } from "./create-task-panel";
 import { BottomNav } from "./bottom-nav";
 import { NewTaskView } from "./new-task-view";
@@ -33,6 +35,7 @@ type Props = {
 
 type ListGroup = "date" | "priority" | "category" | "project";
 type OpenTaskMenu = { taskId: string; menu: TaskCardMenu } | null;
+type PendingUndo = { taskId: string; taskTitle: string; tasksSnapshot: TaskRow[] };
 
 const LIST_GROUP_OPTIONS = [
   { id: "date", label: "By date", mobileLabel: "date" },
@@ -47,6 +50,9 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [openTaskMenu, setOpenTaskMenu] = useState<OpenTaskMenu>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [actionSheetTaskId, setActionSheetTaskId] = useState<string | null>(null);
+  const [pendingUndo, setPendingUndo] = useState<PendingUndo | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Keep optimistic local task state aligned after server refreshes.
@@ -102,6 +108,43 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
     isPending,
   } = useTaskActions(setTasks);
 
+  function handleOptimisticDelete(id: string) {
+    // If another delete is already pending, commit it immediately before starting a new one.
+    if (pendingUndo && pendingUndo.taskId !== id) {
+      if (undoTimerRef.current !== null) clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+      void deleteTask(pendingUndo.taskId);
+      setPendingUndo(null);
+    }
+
+    if (undoTimerRef.current !== null) clearTimeout(undoTimerRef.current);
+
+    const taskToDelete = tasks.find((t) => t.id === id);
+    const snapshot = [...tasks];
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    setPendingUndo({
+      taskId: id,
+      taskTitle: taskToDelete?.title ?? "Task",
+      tasksSnapshot: snapshot,
+    });
+
+    undoTimerRef.current = setTimeout(() => {
+      undoTimerRef.current = null;
+      void deleteTask(id);
+      setPendingUndo(null);
+    }, 5000);
+  }
+
+  function handleUndo() {
+    if (!pendingUndo) return;
+    if (undoTimerRef.current !== null) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+    setTasks(pendingUndo.tasksSnapshot);
+    setPendingUndo(null);
+  }
+
   const filteredTasks = useMemo(() => tasks.filter(isVisibleTaskRow), [tasks]);
 
   const stats = useMemo(() => {
@@ -125,6 +168,11 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
     const task = tasks.find((item) => item.id === editingTaskId);
     return task && isVisibleTaskRow(task) ? task : null;
   }, [editingTaskId, tasks]);
+
+  const actionSheetTask = useMemo(() => {
+    const task = tasks.find((item) => item.id === actionSheetTaskId);
+    return task && isVisibleTaskRow(task) ? task : null;
+  }, [actionSheetTaskId, tasks]);
 
   const groups = useMemo(() => {
     if (listGroup === "date") {
@@ -300,7 +348,11 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
                                 setOpenTaskMenu(null);
                                 setEditingTaskId(id);
                               }}
-                              onDelete={deleteTask}
+                              onDelete={handleOptimisticDelete}
+                              onLongPress={(id) => {
+                                setOpenTaskMenu(null);
+                                setActionSheetTaskId(id);
+                              }}
                             />
                           </ErrorBoundary>
                         ))}
@@ -335,6 +387,38 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
           statusConfigs={statusConfigs}
           onClose={() => setEditingTaskId(null)}
           onSave={updateTask}
+        />
+      )}
+
+      {actionSheetTask && (
+        <TaskActionSheet
+          task={actionSheetTask}
+          statusConfigs={statusConfigs}
+          priorityConfigs={priorityConfigs}
+          onEdit={() => {
+            setActionSheetTaskId(null);
+            setEditingTaskId(actionSheetTask.id);
+          }}
+          onDelete={() => {
+            setActionSheetTaskId(null);
+            handleOptimisticDelete(actionSheetTask.id);
+          }}
+          onSetStatus={(status) => {
+            void setStatus(actionSheetTask.id, status);
+          }}
+          onSetPriority={(priority) => {
+            void setPriority(actionSheetTask.id, priority);
+          }}
+          onClose={() => setActionSheetTaskId(null)}
+        />
+      )}
+
+      {pendingUndo && (
+        <UndoToast
+          key={pendingUndo.taskId}
+          taskTitle={pendingUndo.taskTitle}
+          durationMs={5000}
+          onUndo={handleUndo}
         />
       )}
 
