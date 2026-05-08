@@ -6,14 +6,19 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type ComponentType,
   type FormEvent,
+  type ReactNode,
 } from "react";
 import { format } from "date-fns";
 import clsx from "clsx";
 import {
   CalendarDays,
+  Check,
+  ChevronRight,
   Clock,
   FileText,
+  FolderKanban,
   Hash,
   Link as LinkIcon,
   Save,
@@ -26,6 +31,11 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
 } from "@/lib/constants";
+import {
+  CREATE_TASK_DUE_PRESETS,
+  presetDueDate,
+  type CreateTaskDuePreset,
+} from "./create-task-model";
 import type {
   Category,
   PriorityConfig,
@@ -45,7 +55,6 @@ import {
   MetadataRow,
   MobileFlatRow,
   MobileSection,
-  MobileSelectRow,
   MobileTabs,
   Section,
   SelectShell,
@@ -119,6 +128,9 @@ export function TaskEditOverlay({
 }: Props) {
   const [initialDraft] = useState<Draft>(() => draftFromTask(task));
   const [draft, setDraft] = useState<Draft>(initialDraft);
+  const [selectedDuePreset, setSelectedDuePreset] = useState<CreateTaskDuePreset | null>(() =>
+    matchingDuePreset(initialDraft.due_at),
+  );
   const [descriptionMode, setDescriptionMode] = useState<DescriptionMode>(() =>
     task.description?.trim() ? "preview" : "write",
   );
@@ -131,6 +143,11 @@ export function TaskEditOverlay({
   const statusColorMap = Object.fromEntries(statusConfigs.map((c) => [c.status, c.color]));
   const priorityColorMap = Object.fromEntries(priorityConfigs.map((c) => [c.priority, c.color]));
   const hasUnsavedChanges = !draftsAreEqual(draft, initialDraft);
+  const selectedCategory = categories.find((category) => category.id === draft.category_id);
+  const selectedProject = projects.find((project) => project.id === draft.project_id);
+  const projectLabel = selectedProject?.name ?? "No project";
+  const categoryLabel = selectedCategory?.name ?? "Uncategorized";
+  const statusLabel = displayCode(draft.status);
 
   const requestClose = useCallback(() => {
     if (saving) return;
@@ -362,42 +379,117 @@ export function TaskEditOverlay({
           </section>
 
           <MobileSection title="When">
-            <MobileFlatRow>
-              <input
-                aria-label="Due date"
-                type="date"
-                value={draft.due_at}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, due_at: event.target.value }))
-                }
-                className="date-input-compact w-full bg-transparent text-base font-medium text-[var(--color-text-secondary)] outline-none"
-              />
-            </MobileFlatRow>
-          </MobileSection>
-
-          <MobileSection title="Status">
             <MobileTabs>
-              {TASK_STATUSES.map((status) => {
-                const selected = draft.status === status;
+              {CREATE_TASK_DUE_PRESETS.map((preset) => {
+                const selected = selectedDuePreset === preset.dueDate;
 
                 return (
                   <button
-                    key={status}
+                    key={preset.dueDate}
                     type="button"
                     aria-pressed={selected}
-                    onClick={() => setDraft((prev) => ({ ...prev, status }))}
+                    onClick={() => {
+                      setSelectedDuePreset(preset.dueDate);
+                      setDraft((prev) => ({ ...prev, due_at: presetDueDate(preset.dueDate) }));
+                    }}
                     className={clsx(
-                      "flex min-h-11 items-center justify-center border-b-2 px-1 text-base font-semibold capitalize transition",
+                      "flex min-h-11 items-center justify-center border-b-2 px-2 text-base font-semibold transition",
                       selected
                         ? "border-[var(--color-accent)] text-[var(--color-accent)]"
                         : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
                     )}
                   >
-                    {displayCode(status)}
+                    {preset.mobileLabel}
                   </button>
                 );
               })}
             </MobileTabs>
+            <MobileFlatRow>
+              <input
+                aria-label="Due date"
+                type="date"
+                value={draft.due_at}
+                onChange={(event) => {
+                  setSelectedDuePreset(null);
+                  setDraft((prev) => ({ ...prev, due_at: event.target.value }));
+                }}
+                className="date-input-compact w-full bg-transparent text-base font-medium text-[var(--color-text-secondary)] outline-none"
+              />
+            </MobileFlatRow>
+          </MobileSection>
+
+          <MobileSection title="Meta">
+            <div className="overflow-hidden rounded-3xl border border-[var(--color-line)] bg-[var(--color-surface-primary)]">
+              <MobileMetaSelectRow icon={FolderKanban} label="Project" value={projectLabel}>
+                <select
+                  aria-label="Task project"
+                  value={draft.project_id}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, project_id: event.target.value }))
+                  }
+                  className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
+                >
+                  <option value="">No project</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </MobileMetaSelectRow>
+
+              <MobileMetaSelectRow
+                icon={Check}
+                label="Category"
+                value={categoryLabel}
+              >
+                {categories.length > 0 && (
+                  <select
+                    aria-label="Task category"
+                    value={draft.category_id}
+                    onChange={(event) =>
+                      setDraft((prev) => ({ ...prev, category_id: event.target.value }))
+                    }
+                    className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </MobileMetaSelectRow>
+
+              <MobileMetaSelectRow icon={FileText} label="Status" value={statusLabel}>
+                <select
+                  aria-label="Task status"
+                  value={draft.status}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, status: event.target.value as TaskStatus }))
+                  }
+                  className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
+                >
+                  {TASK_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {displayCode(status)}
+                    </option>
+                  ))}
+                </select>
+              </MobileMetaSelectRow>
+
+              <MobileMetaInputRow icon={Tags} label="Tags">
+                <input
+                  aria-label="Task tags"
+                  value={draft.tags}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, tags: event.target.value }))
+                  }
+                  placeholder="Add"
+                  className="min-w-0 flex-1 bg-transparent text-right text-lg font-bold text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
+                />
+              </MobileMetaInputRow>
+            </div>
           </MobileSection>
 
           <MobileSection title="Priority">
@@ -423,61 +515,6 @@ export function TaskEditOverlay({
                 );
               })}
             </MobileTabs>
-          </MobileSection>
-
-          <MobileSection title="Meta">
-            <div>
-              {categories.length > 0 && (
-                <MobileSelectRow>
-                  <select
-                    aria-label="Task category"
-                    value={draft.category_id}
-                    onChange={(event) =>
-                      setDraft((prev) => ({ ...prev, category_id: event.target.value }))
-                    }
-                    className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
-                  >
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </MobileSelectRow>
-              )}
-
-              {projects.length > 0 && (
-                <MobileSelectRow>
-                  <select
-                    aria-label="Task project"
-                    value={draft.project_id}
-                    onChange={(event) =>
-                      setDraft((prev) => ({ ...prev, project_id: event.target.value }))
-                    }
-                    className="w-full appearance-none bg-transparent pr-7 text-base font-medium text-[var(--color-text-secondary)] outline-none"
-                  >
-                    <option value="">No project</option>
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                </MobileSelectRow>
-              )}
-
-              <MobileFlatRow>
-                <input
-                  aria-label="Task tags"
-                  value={draft.tags}
-                  onChange={(event) =>
-                    setDraft((prev) => ({ ...prev, tags: event.target.value }))
-                  }
-                  placeholder="Tags"
-                  className="w-full bg-transparent text-base font-medium text-[var(--color-text-secondary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
-                />
-              </MobileFlatRow>
-            </div>
           </MobileSection>
         </div>
 
@@ -571,12 +608,38 @@ export function TaskEditOverlay({
               <Section title="Planning" icon={CalendarDays}>
                 <div className="space-y-5">
                   <Field label="Due date">
+                    <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {CREATE_TASK_DUE_PRESETS.map((preset) => {
+                        const selected = selectedDuePreset === preset.dueDate;
+
+                        return (
+                          <button
+                            key={preset.dueDate}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => {
+                              setSelectedDuePreset(preset.dueDate);
+                              setDraft((prev) => ({ ...prev, due_at: presetDueDate(preset.dueDate) }));
+                            }}
+                            className={clsx(
+                              "border-b-2 pb-0.5 text-sm font-bold transition",
+                              selected
+                                ? "border-[var(--color-text-primary)] text-[var(--color-text-primary)]"
+                                : "border-transparent text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]",
+                            )}
+                          >
+                            {preset.desktopLabel}
+                          </button>
+                        );
+                      })}
+                    </div>
                     <input
                       type="date"
                       value={draft.due_at}
-                      onChange={(event) =>
-                        setDraft((prev) => ({ ...prev, due_at: event.target.value }))
-                      }
+                      onChange={(event) => {
+                        setSelectedDuePreset(null);
+                        setDraft((prev) => ({ ...prev, due_at: event.target.value }));
+                      }}
                       className={inputClass}
                     />
                   </Field>
@@ -803,6 +866,55 @@ export function TaskEditOverlay({
   );
 }
 
+function MobileMetaSelectRow({
+  icon: Icon,
+  label,
+  value,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="relative flex min-h-16 items-center gap-4 border-b border-[var(--color-line)] px-5 transition focus-within:bg-[var(--color-surface-secondary)] last:border-b-0">
+      <Icon className="h-5 w-5 shrink-0 text-[var(--color-text-primary)]" />
+      <span className="min-w-0 flex-1 truncate text-lg font-bold text-[var(--color-text-tertiary)]">
+        {label}
+      </span>
+      <span className="flex min-w-0 max-w-[52%] items-center justify-end gap-2 text-lg font-bold text-[var(--color-text-primary)]">
+        <span className="min-w-0 truncate">{value}</span>
+        <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-text-primary)]" />
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function MobileMetaInputRow({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-16 items-center gap-4 border-b border-[var(--color-line)] px-5 last:border-b-0">
+      <Icon className="h-5 w-5 shrink-0 text-[var(--color-text-primary)]" />
+      <span className="min-w-0 flex-1 truncate text-lg font-bold text-[var(--color-text-tertiary)]">
+        {label}
+      </span>
+      <div className="flex min-w-0 max-w-[52%] flex-1 items-center justify-end gap-2">
+        {children}
+        <ChevronRight className="h-5 w-5 shrink-0 text-[var(--color-text-primary)]" />
+      </div>
+    </div>
+  );
+}
+
 function draftsAreEqual(a: Draft, b: Draft): boolean {
   return (
     a.title === b.title &&
@@ -854,6 +966,13 @@ function toDateInput(value: string | Date | null): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   return format(date, "yyyy-MM-dd");
+}
+
+function matchingDuePreset(dueAt: string): CreateTaskDuePreset | null {
+  return (
+    CREATE_TASK_DUE_PRESETS.find((preset) => presetDueDate(preset.dueDate) === dueAt)
+      ?.dueDate ?? null
+  );
 }
 
 function formatDateTime(value: string | Date | null): string {
