@@ -2,7 +2,7 @@
 
 ## P0 — Home-Centered Intelligence Migration
 
-Canonical plan: [docs/HOME_CENTERED_INTELLIGENCE_INTEGRATION.md](docs/HOME_CENTERED_INTELLIGENCE_INTEGRATION.md)
+Canonical plan: [HOME_CENTERED_INTELLIGENCE_INTEGRATION.md](HOME_CENTERED_INTELLIGENCE_INTEGRATION.md)
 
 | Status | ID | Work Item | Notes |
 |---|---|---|---|

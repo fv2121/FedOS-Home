@@ -6,15 +6,22 @@ FedOS Home is the main user-facing shell for FedOS. It is evolving from a task e
 
 This app owns the canonical task system. Any action that Federico has approved should be represented here as a durable task with status, priority, due date, source linkage, and event history. Do not introduce a competing task source of truth elsewhere.
 
-FedOS Home is one of three independent FedOS components:
+FedOS Home is now the target product runtime for the FedOS intelligence experience:
 
-- **FedOS Home**: user experience and canonical agreed-task store.
+- **FedOS Home**: user experience, product runtime, Home PostgreSQL database, and canonical agreed-task store.
 - **FedOS Memory**: Markdown memory for priorities, principles, permissions, decisions, feedback, learning, and context.
-- **FedOS Intelligence**: reasoning/orchestration service for source ingestion, prioritization, briefings, and recommendations.
+- **FedOS Intelligence**: reference/lab implementation while useful reasoning, orchestration, briefing, and recommendation capabilities migrate into the Home backend.
 
-Important product rule: signals and recommendations are not tasks. FedOS Intelligence may propose draft actions, but they become real tasks only after Federico approves them. Once created, FedOS Home tasks become signals themselves: overdue work, blocked items, completions, changes, and repeated deferrals should feed future reasoning and briefings.
+Important product rule: signals and recommendations are not tasks. The intelligence capability may propose draft actions, but they become real tasks only after Federico approves them in Home. Once created, FedOS Home tasks become signals themselves: overdue work, blocked items, completions, changes, and repeated deferrals should feed future reasoning and briefings.
 
-When making changes, preserve this boundary: FedOS Home records what has been agreed; FedOS Memory explains what matters and why; FedOS Intelligence interprets fresh signals and recommends what may need attention.
+When making changes, preserve this boundary: FedOS Home records what has been agreed and owns the product runtime; FedOS Memory explains what matters and why; FedOS Intelligence is migration/reference material unless a capability is explicitly moved into Home.
+
+Canonical product docs live in `docs/`:
+
+- `docs/PROJECT_BRIEF.md`
+- `docs/ARCHITECTURE.md`
+- `docs/HOME_CENTERED_INTELLIGENCE_INTEGRATION.md`
+- `docs/BACKLOG.md`
 
 
 ## Stack
@@ -40,15 +47,20 @@ src/
 │   └── api/
 │       ├── auth/             # login/logout routes (rate-limited)
 │       ├── health/           # Health check
-│       └── llm/              # 12 LLM-safe API contract routes (all POST except listCategories GET)
+│       └── llm/              # 12 LLM-safe task API contract routes (all POST except listCategories GET)
 ├── components/
 │   ├── task-dashboard.tsx    # Dashboard orchestrator (composes sub-components)
 │   ├── dashboard-types.ts    # Shared types: TaskRow, Category, Project, Tag
 │   ├── use-task-actions.ts   # Hook: mutations + URL state management
 │   ├── task-card.tsx         # Single task card with actions
 │   ├── task-filters.tsx      # Search bar + filter dropdowns
-│   ├── task-detail-pane.tsx  # Right sidebar task detail view
-│   ├── quick-add-bar.tsx     # Mobile quick-add form
+│   ├── task-edit-overlay.tsx # Task edit/detail overlay
+│   ├── task-action-sheet.tsx # Mobile task actions
+│   ├── new-task-view.tsx     # Mobile task creation view
+│   ├── create-task-panel.tsx # Desktop task creation panel
+│   ├── create-task-model.ts  # Shared task creation model/helpers
+│   ├── error-boundary.tsx    # Client error boundary
+│   ├── undo-toast.tsx        # Undo/notification surface
 │   ├── bottom-nav.tsx        # Mobile bottom navigation
 │   └── login-form.tsx        # Password entry form
 └── lib/
@@ -56,6 +68,7 @@ src/
     ├── auth.ts               # HMAC-SHA256 session tokens, bcrypt password validation
     ├── api-auth.ts           # Request-level auth check (cookie verification)
     ├── auth-constants.ts     # AUTH_COOKIE_NAME
+    ├── session-token.ts      # Session token signing/verification helpers
     ├── constants.ts          # Enums: TASK_STATUSES, TASK_PRIORITIES, VIEW_OPTIONS, etc.
     ├── validators.ts         # Zod schemas for all API inputs
     ├── http.ts               # ok() and fail() response helpers
@@ -70,12 +83,12 @@ src/
 - **Database (Prisma)**: 7 models — Task, Category, Project, Tag, TaskTag, TaskEvent, TaskSource. Enums for status, priority, source type, actor type, project status.
 - **Service (lib/task-service.ts)**: All business logic. Transactional mutations. Query builder with dynamic filtering. Every mutation writes to task_events for audit trail.
 - **API routes (app/api/llm/*)**: Thin delegation layer. Each route: validate with Zod → check auth → call service → return ok/fail response. No business logic in routes.
-- **Components**: TaskDashboard orchestrator composes TaskFilters, TaskCard, TaskDetailPane, QuickAddBar, BottomNav. Mutation logic lives in useTaskActions hook.
+- **Components**: TaskDashboard orchestrator composes TaskFilters, TaskCard, NewTaskView, CreateTaskPanel, TaskEditOverlay, TaskActionSheet, UndoToast, and BottomNav. Mutation logic lives in useTaskActions hook.
 - **Proxy (proxy.ts)**: Cookie-based session check, redirects unauthenticated users to /login.
 
 ### API Route Pattern
 
-All 12 LLM routes follow this pattern:
+All 12 task-focused LLM routes follow this pattern:
 ```typescript
 const parsed = await requireJson(request, schema);
 if (parsed.error) return parsed.error;

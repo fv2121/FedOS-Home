@@ -1,20 +1,22 @@
 # FedOS Home
 
-FedOS Home is the user-facing command center for FedOS.
+FedOS Home is the user-facing command center and product runtime for FedOS.
 
-It owns the approved task system and provides the one-stop interface for:
+It owns the mobile-first and desktop-continuous product experience for:
 - today’s priorities
 - agreed tasks
 - approvals
 - briefings
 - recommendations
 - links back to source context
+- approved actions and task outcomes
 
 FedOS Memory remains the canonical source for priorities, permissions,
 decisions, feedback, learning, and operating context.
 
-FedOS Intelligence remains the reasoning/orchestration service that ingests
-fresh signals and proposes briefings, recommendations, and draft actions.
+FedOS Intelligence is now treated as the reference/lab implementation while
+the useful reasoning and orchestration capabilities migrate into the Home
+backend.
 
 Only user-approved actions become durable tasks in FedOS Home.
 
@@ -28,10 +30,22 @@ Only user-approved actions become durable tasks in FedOS Home.
 - Prisma ORM
 - Railway deployment
 
+## Product Documentation
+
+Canonical product documentation now lives in this repo:
+
+- [Project brief](docs/PROJECT_BRIEF.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Home-centered intelligence integration](docs/HOME_CENTERED_INTELLIGENCE_INTEGRATION.md)
+- [Backlog](docs/BACKLOG.md)
+
+FedOS Intelligence docs should be treated as migration/reference material unless
+they explicitly say otherwise.
+
 ## Features (V1)
 
 - Single-user auth gate
-- Task CRUD plus complete, defer, drop
+- Task CRUD plus complete and delete
 - Categories, projects, tags data model
 - Search and filtering
 - Group by category
@@ -87,7 +101,7 @@ Generate a hash: `node -e "const b=require('bcryptjs');console.log(b.hashSync('y
 
 Login is rate-limited to 5 attempts per IP per 15 minutes.
 
-Default fallback exists for development only (password: "fedos"). Set secure values before deployment.
+Set secure values before deployment. `AUTH_PASSWORD_HASH` is required.
 
 ## LLM API Contract
 
@@ -98,7 +112,7 @@ All routes are under /api/llm and require auth cookie.
 - POST /api/llm/createTask
 - POST /api/llm/updateTask
 - POST /api/llm/completeTask
-- POST /api/llm/deferTask
+- POST /api/llm/deleteTask
 - POST /api/llm/addTaskNote
 - POST /api/llm/getTaskHistory
 - POST /api/llm/summarizeTasks
