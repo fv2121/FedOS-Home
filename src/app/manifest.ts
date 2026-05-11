@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FedOS Tasks",
+    name: "FedOS Home",
     short_name: "FedOS",
-    description: "FedOS Tasks Companion App",
+    description: "FedOS Home",
     start_url: "/",
     display: "standalone",
     background_color: "#f8f7f4",

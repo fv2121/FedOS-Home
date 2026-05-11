@@ -1,9 +1,23 @@
-# fedos-tasks
+# FedOS Home
 
-Standalone execution/task database app for FedOS.
+FedOS Home is the user-facing command center for FedOS.
 
-FedOS Markdown remains the authority for priorities, permissions, and judgment.
-This app is the authority for durable task execution state.
+It owns the approved task system and provides the one-stop interface for:
+- today’s priorities
+- agreed tasks
+- approvals
+- briefings
+- recommendations
+- links back to source context
+
+FedOS Memory remains the canonical source for priorities, permissions,
+decisions, feedback, learning, and operating context.
+
+FedOS Intelligence remains the reasoning/orchestration service that ingests
+fresh signals and proposes briefings, recommendations, and draft actions.
+
+Only user-approved actions become durable tasks in FedOS Home.
+
 
 ## Stack
 
@@ -119,7 +133,7 @@ The app ships as a basic PWA — no offline task editing.
 1. Deploy to Railway and open the HTTPS Railway URL in Safari.
 2. Log in with your password.
 3. Tap the Share icon → "Add to Home Screen".
-4. Accept the default name ("FedOS Tasks") and tap Add.
+4. Accept the default name ("FedOS Home") and tap Add.
 
 **Install on Android (Chrome):**
 
@@ -143,9 +157,9 @@ From this folder:
 
 	git init
 	git add .
-	git commit -m "Initial fedos-tasks app"
+	git commit -m "Initial fedos-home app"
 	git branch -M main
-	git remote add origin git@github.com:<your-user>/fedos-tasks.git
+	git remote add origin git@github.com:<your-user>/fedos-home.git
 	git push -u origin main
 
 ## Morning Briefing Readiness

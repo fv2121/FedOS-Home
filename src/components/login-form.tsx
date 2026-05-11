@@ -39,7 +39,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
 
   return (
     <div className="mx-auto w-full max-w-sm rounded-3xl border border-[var(--color-line)] bg-[var(--color-panel)] p-6 shadow-[0_30px_60px_-30px_rgba(15,23,42,0.35)] backdrop-blur">
-      <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">FedOS Tasks</p>
+      <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-text-tertiary)]">FedOS Home</p>
       <h1 className="mt-3 text-2xl font-black tracking-tight text-[var(--color-text-primary)]">Sign in</h1>
       <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
         Single-user gate for your personal task execution workspace.

@@ -14,12 +14,12 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FedOS Tasks",
-  description: "FedOS Tasks Companion App",
-  applicationName: "FedOS Tasks",
+  title: "FedOS Home",
+  description: "FedOS Home",
+  applicationName: "FedOS Home",
   appleWebApp: {
     capable: true,
-    title: "FedOS Tasks",
+    title: "FedOS Home",
     statusBarStyle: "black-translucent",
   },
 };

@@ -1,8 +1,21 @@
 @AGENTS.md
 
-# FedOS Tasks Companion App
+# FedOS Home
 
-Single-user task execution database for FedOS. The FedOS Markdown system remains the authority for priorities, permissions, and judgment. This app is the authority for durable task execution state.
+FedOS Home is the main user-facing shell for FedOS. It is evolving from a task execution app into the command center for daily priorities, agreed actions, approvals, briefings, and follow-up.
+
+This app owns the canonical task system. Any action that Federico has approved should be represented here as a durable task with status, priority, due date, source linkage, and event history. Do not introduce a competing task source of truth elsewhere.
+
+FedOS Home is one of three independent FedOS components:
+
+- **FedOS Home**: user experience and canonical agreed-task store.
+- **FedOS Memory**: Markdown memory for priorities, principles, permissions, decisions, feedback, learning, and context.
+- **FedOS Intelligence**: reasoning/orchestration service for source ingestion, prioritization, briefings, and recommendations.
+
+Important product rule: signals and recommendations are not tasks. FedOS Intelligence may propose draft actions, but they become real tasks only after Federico approves them. Once created, FedOS Home tasks become signals themselves: overdue work, blocked items, completions, changes, and repeated deferrals should feed future reasoning and briefings.
+
+When making changes, preserve this boundary: FedOS Home records what has been agreed; FedOS Memory explains what matters and why; FedOS Intelligence interprets fresh signals and recommends what may need attention.
+
 
 ## Stack
 
