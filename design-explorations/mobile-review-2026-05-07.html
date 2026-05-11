@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FedOS Home — Mobile Review (Home, Edit, New)</title>
+<style>
+  /* ── page chrome ──────────────────────────────────────────── */
+  :root {
+    --page-bg:      #0e0e10;
+    --page-fg:      #e8e8ea;
+    --muted:        #8a8a92;
+    --hairline:     rgba(255,255,255,0.08);
+
+    /* live app tokens (mobile / dark) */
+    --bg:           #14141a;
+    --panel:        #1c1c24;
+    --surface:      #252530;
+    --line:         rgba(255,255,255,0.08);
+    --tx-1:         #f1f1f3;
+    --tx-2:         #a1a1aa;
+    --tx-3:         #71717a;
+    --accent:       #22c55e;
+    --accent-fg:    #052e16;
+    --danger:       #f87171;
+
+    /* improved palette */
+    --imp-bg:       #0d0d12;
+    --imp-panel:    #16161e;
+    --imp-line:     rgba(255,255,255,0.07);
+    --imp-accent:   #34d399;
+    --imp-accent-2: #38bdf8;
+    --imp-warn:     #fbbf24;
+    --imp-danger:   #fb7185;
+
+    --phone-w: 360px;
+    --phone-h: 740px;
+
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Manrope", system-ui, sans-serif;
+  }
+  html, body { margin: 0; background: var(--page-bg); color: var(--page-fg); }
+  body { padding: 40px 24px 80px; line-height: 1.5; }
+  header.page {
+    max-width: 1480px; margin: 0 auto 32px;
+    border-bottom: 1px solid var(--hairline); padding-bottom: 18px;
+  }
+  header.page h1 { font-size: 24px; letter-spacing: -0.02em; margin: 0 0 6px; font-weight: 600; }
+  header.page p  { color: var(--muted); margin: 0; font-size: 14px; max-width: 820px; }
+  .meta-row {
+    display: flex; gap: 24px; margin-top: 14px;
+    color: var(--muted); font-size: 12px; flex-wrap: wrap;
+  }
+  .meta-row span b { color: var(--page-fg); font-weight: 600; }
+
+  section.block { max-width: 1480px; margin: 0 auto 56px; }
+  section.block > h2 {
+    font-size: 18px; margin: 0 0 6px; letter-spacing: -0.01em;
+  }
+  section.block > p.lede {
+    margin: 0 0 22px; color: var(--muted); font-size: 13.5px; max-width: 820px;
+  }
+
+  .phones {
+    display: grid; gap: 28px;
+    grid-template-columns: repeat(3, var(--phone-w));
+    justify-content: start;
+  }
+  .phones figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .phones figcaption {
+    font-size: 12px; color: var(--muted); padding-left: 4px;
+  }
+  .phones figcaption b { color: var(--page-fg); font-weight: 600; font-size: 13px; display: block; }
+
+  /* ── phone shell ─────────────────────────────────────────── */
+  .phone {
+    width: var(--phone-w); height: var(--phone-h);
+    border-radius: 38px; overflow: hidden; position: relative;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 30px 60px -20px rgba(0,0,0,0.65),
+      0 8px 24px -8px rgba(0,0,0,0.55);
+    isolation: isolate;
+    background: var(--bg);
+  }
+  .phone .notch {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    width: 100px; height: 24px; background: #000; border-radius: 999px; z-index: 5;
+  }
+  .phone .status-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 44px; z-index: 4;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; font-size: 13px; font-weight: 600; color: var(--tx-1);
+  }
+  .phone .status-bar .right { display: flex; gap: 6px; align-items: center; }
+  .phone .status-bar .right svg { display: block; }
+  .phone .screen {
+    position: absolute; inset: 0; padding-top: 44px;
+    display: flex; flex-direction: column; min-height: 0;
+    color: var(--tx-1);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── shared bits used by current mockups ─────────────────── */
+  .seg {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--line); border-radius: 12px;
+    background: var(--panel); padding: 4px; gap: 2px;
+  }
+  .seg button {
+    appearance: none; background: transparent; color: var(--tx-2); border: 0;
+    font: 600 13px/1 inherit; padding: 12px 4px; border-radius: 8px;
+    cursor: pointer; text-align: center;
+  }
+  .seg button.active {
+    background: var(--accent); color: var(--accent-fg);
+  }
+
+  .group-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 4px 6px;
+  }
+  .group-head .chev { width: 12px; height: 12px; opacity: 0.6; }
+  .group-head h3 {
+    margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em;
+    color: var(--tx-3); text-transform: uppercase;
+  }
+  .group-head .count { color: var(--tx-3); font-size: 12px; }
+  .group-head .rule { flex: 1; height: 1px; background: var(--line); }
+
+  .row {
+    display: grid; grid-template-columns: 22px 1fr 32px;
+    align-items: center; gap: 12px;
+    padding: 12px 4px;
+  }
+  .row .check {
+    width: 20px; height: 20px; border-radius: 5px;
+    border: 2px solid rgba(255,255,255,0.18); background: transparent;
+  }
+  .row .check.done {
+    background: var(--accent); border-color: var(--accent);
+    display: grid; place-items: center; color: var(--accent-fg);
+  }
+  .row .title { font-size: 16px; font-weight: 500; color: var(--tx-1); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .title.done { color: var(--tx-3); text-decoration: line-through; }
+  .row .pencil {
+    width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center;
+    color: var(--tx-3); background: transparent;
+  }
+
+  .bottom-nav {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 10;
+    border-top: 1px solid var(--line); background: var(--panel);
+    padding: 6px 8px calc(env(safe-area-inset-bottom, 8px) + 8px);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  }
+  .bottom-nav button {
+    appearance: none; background: transparent; color: var(--tx-3); border: 0;
+    border-radius: 12px; padding: 10px 8px;
+    font: 600 13px/1.1 inherit;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer;
+  }
+  .bottom-nav button.active { background: var(--surface); color: var(--accent); }
+  .bottom-nav svg { width: 22px; height: 22px; }
+
+  /* ── HOME (current) ──────────────────────────────────────── */
+  .home .body { flex: 1; min-height: 0; overflow: hidden; padding: 16px 12px 96px; }
+  .home .body .seg { margin-bottom: 8px; }
+
+  /* ── EDIT (current) ──────────────────────────────────────── */
+  .edit .body { flex: 1; padding: 12px 22px calc(env(safe-area-inset-bottom, 8px) + 16px); display: flex; flex-direction: column; min-height: 0; }
+  .edit .topbar { display: flex; justify-content: flex-end; min-height: 40px; align-items: center; }
+  .edit .x {
+    width: 40px; height: 40px; border-radius: 10px; background: transparent; border: 0;
+    color: var(--tx-3); display: grid; place-items: center; cursor: pointer;
+  }
+  .edit .scroll { flex: 1; min-height: 0; overflow: hidden; padding-bottom: 8px; }
+  .edit h1.title-input {
+    font-size: 26px; font-weight: 700; line-height: 1.2; padding: 12px 0; margin: 0;
+    color: var(--tx-1);
+  }
+  .edit .write-preview {
+    display: grid; grid-template-columns: 1fr 1fr; width: 60%; margin-left: auto;
+    border-bottom: 1px solid var(--line);
+  }
+  .edit .write-preview button {
+    background: transparent; border: 0; color: var(--tx-2);
+    padding: 10px 16px; font: 600 13px/1 inherit; border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .edit .write-preview button.active { color: var(--accent); border-color: var(--accent); }
+
+  .edit .desc {
+    color: var(--tx-2); font-size: 15px; line-height: 1.55;
+    padding: 12px 0;
+  }
+  .edit .section-head {
+    display: flex; align-items: center; gap: 10px; min-height: 28px;
+    margin-top: 18px;
+  }
+  .edit .section-head h2 {
+    margin: 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--tx-3);
+  }
+  .edit .section-head .rule { flex: 1; height: 1px; background: var(--line); }
+  .edit .flat-row {
+    min-height: 48px; display: flex; align-items: center;
+    border-bottom: 1px solid var(--line); padding: 12px 0;
+    color: var(--tx-2); font-size: 15px; font-weight: 500;
+  }
+  .edit .flat-row .icon { width: 16px; height: 16px; color: var(--tx-3); margin-right: 12px; }
+  .edit .tabs {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--line);
+  }
+  .edit .tabs button {
+    background: transparent; border: 0; color: var(--tx-2);
+    padding: 12px 4px; font: 600 14px/1 inherit; border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .edit .tabs button.active { color: var(--accent); border-color: var(--accent); }
+  .edit .save {
+    margin-top: 12px;
+    background: var(--accent); color: var(--accent-fg); border: 0;
+    border-radius: 10px; padding: 14px; font: 700 16px/1 inherit; cursor: pointer;
+  }
+
+  /* ── NEW TASK (current) ─────────────────────────────────── */
+  .new .body { flex: 1; padding: 12px 22px calc(64px + env(safe-area-inset-bottom, 8px) + 16px); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .new input.title-input, .new textarea.desc-input { width: 100%; background: transparent; border: 0; color: var(--tx-1); padding: 12px 0; outline: 0; resize: none; font-family: inherit; }
+  .new input.title-input { font-size: 26px; font-weight: 700; }
+  .new input.title-input::placeholder { color: var(--tx-3); font-style: italic; font-weight: 700; font-size: 26px; }
+  .new textarea.desc-input { color: var(--tx-2); font-size: 15px; min-height: 96px; }
+  .new textarea.desc-input::placeholder { color: var(--tx-3); font-style: italic; }
+  .new .add-btn {
+    background: var(--accent); color: var(--accent-fg); border: 0;
+    border-radius: 10px; padding: 14px; font: 700 16px/1 inherit; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 12px;
+  }
+  .new .section-head, .new .tabs, .new .flat-row, .new .section-head h2 { /* reuse edit styles */ }
+
+  /* ── inline icons ────────────────────────────────────────── */
+  .icon {
+    width: 16px; height: 16px;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* ── critique / improvements layout ─────────────────────── */
+  .critique {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    margin-top: 20px;
+  }
+  .critique .card {
+    background: #14141a; border: 1px solid var(--hairline); border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .critique .card h3 {
+    margin: 0 0 6px; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--page-fg);
+  }
+  .critique .card h3 .pill {
+    display: inline-block; margin-left: 8px; font-size: 10px; padding: 2px 8px;
+    border-radius: 999px; background: rgba(255,255,255,0.07); color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .critique .card ul { margin: 6px 0 0; padding-left: 18px; color: var(--page-fg); font-size: 13.5px; }
+  .critique .card li { margin: 6px 0; }
+  .critique .card li b { color: #fff; }
+  .critique .card li em { color: var(--muted); font-style: normal; }
+
+  .severity { padding: 1px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; }
+  .sev-high { background: rgba(251,113,133,0.15); color: #fda4af; }
+  .sev-med  { background: rgba(251,191,36,0.13); color: #fcd34d; }
+  .sev-low  { background: rgba(56,189,248,0.13); color: #7dd3fc; }
+
+  /* ── Improved phone variants ─────────────────────────────── */
+  .phone.imp { background: var(--imp-bg); }
+  .imp .panel { background: var(--imp-panel); border: 1px solid var(--imp-line); border-radius: 14px; }
+
+  /* improved home */
+  .imp.home .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px 12px;
+  }
+  .imp.home .greet { display: flex; flex-direction: column; }
+  .imp.home .greet b { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: var(--tx-1); }
+  .imp.home .greet span { font-size: 12px; color: var(--tx-3); }
+  .imp.home .iconbtn {
+    width: 36px; height: 36px; border-radius: 12px;
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    display: grid; place-items: center; color: var(--tx-2);
+  }
+  .imp.home .search {
+    margin: 0 16px 12px; padding: 10px 12px; border-radius: 12px;
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    display: flex; align-items: center; gap: 8px; color: var(--tx-3); font-size: 14px;
+  }
+  .imp.home .kpis {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    padding: 0 16px 12px;
+  }
+  .imp.home .kpi {
+    border-radius: 14px; padding: 10px; background: var(--imp-panel); border: 1px solid var(--imp-line);
+  }
+  .imp.home .kpi b { font-size: 22px; font-weight: 700; color: var(--tx-1); display: block; line-height: 1.05; }
+  .imp.home .kpi span { font-size: 11px; color: var(--tx-3); letter-spacing: 0.04em; text-transform: uppercase; }
+  .imp.home .kpi.warn b { color: var(--imp-warn); }
+  .imp.home .kpi.danger b { color: var(--imp-danger); }
+  .imp.home .seg-pill {
+    display: flex; gap: 6px; padding: 0 16px 8px; overflow-x: auto;
+  }
+  .imp.home .seg-pill button {
+    border: 1px solid var(--imp-line); background: var(--imp-panel); color: var(--tx-2);
+    border-radius: 999px; padding: 8px 14px; font: 600 12px/1 inherit;
+    white-space: nowrap; cursor: pointer;
+  }
+  .imp.home .seg-pill button.active { background: var(--imp-accent); color: #052e16; border-color: var(--imp-accent); }
+  .imp.home .scroll-wrap { flex: 1; min-height: 0; overflow: hidden; padding: 0 16px 100px; }
+
+  .imp .group-head h3 { color: var(--tx-2); }
+  .imp .group-head .stamp { font-size: 11px; color: var(--tx-3); padding: 2px 8px; border-radius: 999px; background: var(--imp-panel); border: 1px solid var(--imp-line); }
+
+  .imp .row-card {
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    border-radius: 14px; padding: 12px;
+    display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .imp .row-card .left-bar {
+    position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 4px;
+    background: transparent;
+  }
+  .imp .row-card.crit .left-bar { background: var(--imp-danger); }
+  .imp .row-card.high .left-bar { background: var(--imp-warn); }
+  .imp .row-card.med  .left-bar { background: var(--imp-accent-2); }
+  .imp .row-card.low  .left-bar { background: var(--tx-3); }
+  .imp .row-card .check { width: 22px; height: 22px; border-radius: 7px; border: 2px solid rgba(255,255,255,0.18); }
+  .imp .row-card .check.done { background: var(--imp-accent); border-color: var(--imp-accent); display: grid; place-items: center; color: #052e16; }
+  .imp .row-card .title { font-size: 15.5px; font-weight: 600; color: var(--tx-1); }
+  .imp .row-card .title.done { color: var(--tx-3); text-decoration: line-through; }
+  .imp .row-card .meta {
+    margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px;
+    font-size: 11px; color: var(--tx-2);
+  }
+  .imp .row-card .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--imp-line);
+  }
+  .imp .row-card .chip .dot { width: 6px; height: 6px; border-radius: 999px; }
+  .imp .row-card .chip.due { color: var(--imp-warn); border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.08); }
+  .imp .row-card .chip.over { color: var(--imp-danger); border-color: rgba(251,113,133,0.3); background: rgba(251,113,133,0.1); }
+
+  .imp .fab {
+    position: absolute; right: 18px; bottom: 92px;
+    width: 56px; height: 56px; border-radius: 28px;
+    background: linear-gradient(135deg, var(--imp-accent), #10b981);
+    color: #052e16; display: grid; place-items: center;
+    box-shadow: 0 16px 40px -12px rgba(16,185,129,0.6), 0 6px 12px -4px rgba(0,0,0,0.6);
+    z-index: 9; font-size: 26px; font-weight: 700;
+  }
+
+  .imp .nav {
+    position: absolute; left: 12px; right: 12px; bottom: 10px;
+    border-radius: 22px; padding: 6px;
+    background: rgba(20,20,28,0.86); backdrop-filter: blur(10px);
+    border: 1px solid var(--imp-line);
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+  }
+  .imp .nav button {
+    appearance: none; background: transparent; color: var(--tx-3); border: 0;
+    border-radius: 16px; padding: 8px 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font: 600 11px/1.1 inherit; cursor: pointer;
+  }
+  .imp .nav button.active { color: var(--imp-accent); }
+  .imp .nav svg { width: 22px; height: 22px; }
+
+  /* improved edit */
+  .imp.edit .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px 6px; gap: 8px;
+    background: rgba(13,13,18,0.85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--imp-line);
+  }
+  .imp.edit .topbar .left { display: flex; align-items: center; gap: 8px; }
+  .imp.edit .topbar .crumb { font-size: 12px; color: var(--tx-3); }
+  .imp.edit .topbar .crumb b { color: var(--tx-1); }
+  .imp.edit .topbar button {
+    background: transparent; border: 0; color: var(--tx-2);
+    width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+  }
+  .imp.edit .topbar .save {
+    width: auto; padding: 0 14px; height: 36px; border-radius: 10px;
+    background: var(--imp-accent); color: #052e16; font: 700 13px/1 inherit;
+  }
+  .imp.edit .body { flex: 1; min-height: 0; overflow: hidden; padding: 14px 16px 110px; }
+  .imp.edit h1 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.2; padding: 4px 0 2px; }
+  .imp.edit .summary {
+    display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px;
+  }
+  .imp.edit .summary .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; border-radius: 999px;
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    font-size: 12px; color: var(--tx-1); font-weight: 600;
+  }
+  .imp.edit .summary .chip .dot { width: 6px; height: 6px; border-radius: 999px; }
+  .imp.edit .desc-card {
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    border-radius: 14px; padding: 12px;
+  }
+  .imp.edit .desc-card .toolbar {
+    display: flex; gap: 4px; padding-bottom: 8px; border-bottom: 1px dashed var(--imp-line); margin-bottom: 8px;
+  }
+  .imp.edit .desc-card .toolbar button {
+    width: 28px; height: 28px; border-radius: 8px; background: transparent; color: var(--tx-3);
+    border: 0; display: grid; place-items: center;
+  }
+  .imp.edit .desc-card .toolbar button.active { background: rgba(255,255,255,0.06); color: var(--tx-1); }
+  .imp.edit .desc-card .desc-text { color: var(--tx-2); font-size: 14px; line-height: 1.55; min-height: 100px; }
+  .imp.edit .field { margin-top: 14px; }
+  .imp.edit .field-label { font-size: 11px; color: var(--tx-3); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 6px; }
+  .imp.edit .seg-color { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .imp.edit .seg-color button {
+    appearance: none; border-radius: 12px; padding: 10px 4px;
+    font: 600 13px/1 inherit; cursor: pointer; text-align: center;
+    background: var(--imp-panel); border: 1px solid var(--imp-line); color: var(--tx-2);
+  }
+  .imp.edit .seg-color button.crit  { color: var(--imp-danger); border-color: rgba(251,113,133,0.35); }
+  .imp.edit .seg-color button.crit.active { background: rgba(251,113,133,0.18); color: #fff; border-color: var(--imp-danger); }
+  .imp.edit .seg-color button.high  { color: var(--imp-warn); border-color: rgba(251,191,36,0.3); }
+  .imp.edit .seg-color button.high.active { background: rgba(251,191,36,0.16); color: #fff; border-color: var(--imp-warn); }
+  .imp.edit .seg-color button.med   { color: var(--imp-accent-2); border-color: rgba(56,189,248,0.3); }
+  .imp.edit .seg-color button.med.active { background: rgba(56,189,248,0.16); color: #fff; border-color: var(--imp-accent-2); }
+  .imp.edit .seg-color button.low   { color: var(--tx-2); }
+  .imp.edit .seg-color button.low.active { background: rgba(255,255,255,0.06); color: #fff; border-color: rgba(255,255,255,0.25); }
+
+  .imp.edit .seg-status { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .imp.edit .seg-status button {
+    appearance: none; border-radius: 12px; padding: 10px 4px;
+    font: 600 12.5px/1 inherit; cursor: pointer; text-align: center;
+    background: var(--imp-panel); border: 1px solid var(--imp-line); color: var(--tx-2);
+  }
+  .imp.edit .seg-status button.active.done { background: rgba(52,211,153,0.18); color: #fff; border-color: var(--imp-accent); }
+  .imp.edit .seg-status button.active { background: rgba(56,189,248,0.18); color: #fff; border-color: var(--imp-accent-2); }
+
+  .imp.edit .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .imp.edit .input-cell {
+    background: var(--imp-panel); border: 1px solid var(--imp-line); border-radius: 12px;
+    padding: 10px 12px; display: flex; align-items: center; gap: 8px;
+    color: var(--tx-1); font-size: 13.5px;
+  }
+  .imp.edit .input-cell .label { font-size: 10px; color: var(--tx-3); letter-spacing: 0.06em; text-transform: uppercase; flex: 1; }
+  .imp.edit .input-cell .value { font-weight: 600; }
+  .imp.edit .save-bar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 12px 16px calc(env(safe-area-inset-bottom, 8px) + 16px);
+    background: linear-gradient(180deg, transparent, var(--imp-bg) 50%);
+    display: flex; gap: 8px;
+  }
+  .imp.edit .save-bar button {
+    flex: 1; height: 48px; border-radius: 14px; border: 0; cursor: pointer;
+    font: 700 15px/1 inherit;
+  }
+  .imp.edit .save-bar .secondary { background: var(--imp-panel); color: var(--tx-2); border: 1px solid var(--imp-line); }
+  .imp.edit .save-bar .primary   { background: var(--imp-accent); color: #052e16; }
+
+  /* improved new */
+  .imp.new .topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 16px 6px; border-bottom: 1px solid var(--imp-line);
+  }
+  .imp.new .topbar .left { display: flex; align-items: center; gap: 8px; }
+  .imp.new .topbar .crumb { font-size: 12px; color: var(--tx-3); }
+  .imp.new .topbar button {
+    background: transparent; border: 0; color: var(--tx-2);
+    width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+  }
+  .imp.new .topbar .step {
+    display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--tx-3);
+  }
+  .imp.new .topbar .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--imp-line); }
+  .imp.new .topbar .dot.active { background: var(--imp-accent); }
+  .imp.new .body { flex: 1; min-height: 0; overflow: hidden; padding: 14px 16px 120px; }
+  .imp.new input.title-input {
+    width: 100%; background: transparent; border: 0; outline: 0;
+    font: 700 22px/1.25 inherit; color: var(--tx-1);
+    padding: 4px 0 6px;
+  }
+  .imp.new input.title-input::placeholder { color: var(--tx-3); }
+
+  .imp.new .quick-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 14px;
+  }
+  .imp.new .quick-row .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 12px; border-radius: 999px;
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    font-size: 12.5px; color: var(--tx-2); font-weight: 600;
+  }
+  .imp.new .quick-row .chip.active { background: rgba(52,211,153,0.16); border-color: var(--imp-accent); color: #fff; }
+  .imp.new .quick-row .chip svg { width: 14px; height: 14px; }
+
+  .imp.new .desc-card {
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    border-radius: 14px; padding: 12px;
+    color: var(--tx-3); font-size: 14px; line-height: 1.55; min-height: 110px;
+  }
+  .imp.new .accordion {
+    margin-top: 12px; background: var(--imp-panel); border: 1px solid var(--imp-line);
+    border-radius: 14px; overflow: hidden;
+  }
+  .imp.new .accordion .row {
+    display: grid; grid-template-columns: 18px 1fr auto; gap: 10px; align-items: center;
+    padding: 12px; border-bottom: 1px solid var(--imp-line); color: var(--tx-1);
+    font-size: 14px;
+  }
+  .imp.new .accordion .row:last-child { border-bottom: 0; }
+  .imp.new .accordion .row .label { color: var(--tx-3); font-weight: 600; }
+  .imp.new .accordion .row .value { color: var(--tx-1); font-weight: 600; }
+  .imp.new .accordion .row .value .dot { width: 6px; height: 6px; border-radius: 999px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+  .imp.new .add-bar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 12px 16px calc(env(safe-area-inset-bottom, 8px) + 16px);
+    background: linear-gradient(180deg, transparent, var(--imp-bg) 50%);
+    display: flex; gap: 8px;
+  }
+  .imp.new .add-bar .save-add {
+    flex: 1; height: 48px; border-radius: 14px; border: 1px solid var(--imp-line);
+    background: var(--imp-panel); color: var(--tx-2); font: 700 14px/1 inherit;
+  }
+  .imp.new .add-bar .add {
+    flex: 1.4; height: 48px; border-radius: 14px; border: 0; cursor: pointer;
+    font: 700 15px/1 inherit; background: var(--imp-accent); color: #052e16;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* ── improvements summary table ─────────────────────────── */
+  table.deltas { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; }
+  table.deltas th, table.deltas td { padding: 12px 14px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+  table.deltas th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  table.deltas td b { color: #fff; }
+  table.deltas td em { color: var(--muted); font-style: normal; }
+
+  /* ── small util ─────────────────────────────────────────── */
+  .legend {
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    color: var(--muted); font-size: 12px; margin-bottom: 10px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
+  .legend .dot.crit { background: var(--imp-danger); }
+  .legend .dot.high { background: var(--imp-warn); }
+  .legend .dot.med  { background: var(--imp-accent-2); }
+  .legend .dot.low  { background: var(--tx-3); }
+
+  @media (max-width: 1200px) { .phones { grid-template-columns: repeat(2, var(--phone-w)); } }
+  @media (max-width: 800px)  { .phones { grid-template-columns: var(--phone-w); } }
+
+  /* ── Gesture mockups (Section 5) ─────────────────────────── */
+  .gesture-row { position: relative; height: 76px; margin-bottom: 8px; }
+  .gesture-row .actions {
+    position: absolute; inset: 0; display: flex; align-items: stretch;
+    border-radius: 14px; overflow: hidden;
+  }
+  .gesture-row .actions .left,
+  .gesture-row .actions .right {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 18px; font: 700 13px/1 inherit; color: #fff;
+  }
+  .gesture-row .actions .left  { justify-content: flex-start; background: var(--imp-accent); color: #052e16; flex: 1; }
+  .gesture-row .actions .right { justify-content: flex-end;   background: var(--imp-danger); flex: 1; }
+  .gesture-row .actions svg { width: 18px; height: 18px; }
+
+  .gesture-row .card {
+    position: absolute; inset: 0;
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    border-radius: 14px; padding: 12px;
+    display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start;
+    box-shadow: 0 10px 24px -10px rgba(0,0,0,0.6);
+    transition: transform .2s ease;
+  }
+  .gesture-row.right-swipe .card { transform: translateX(96px); }
+  .gesture-row.left-swipe  .card { transform: translateX(-118px); }
+  .gesture-row.left-commit .card { transform: translateX(-100%); opacity: 0.4; }
+
+  .gesture-row .card .check { width: 22px; height: 22px; border-radius: 7px; border: 2px solid rgba(255,255,255,0.18); }
+  .gesture-row .card .title { font-size: 15.5px; font-weight: 600; color: var(--tx-1); }
+  .gesture-row .card .meta {
+    margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap;
+    font-size: 11px; color: var(--tx-2);
+  }
+  .gesture-row .card .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--imp-line);
+  }
+  .gesture-row .card .chip .dot { width: 6px; height: 6px; border-radius: 999px; }
+
+  .gesture-finger {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 36px; height: 36px; border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(4px);
+    z-index: 5;
+    display: grid; place-items: center;
+    color: #fff; font-size: 11px; font-weight: 700;
+  }
+  .gesture-finger.right { right: 28px; }
+  .gesture-finger.left  { left: 28px; }
+  .gesture-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px;
+  }
+  .gesture-arrow.right { right: 70px; width: 60px; }
+  .gesture-arrow.left  { left: 70px; width: 60px; }
+
+  .threshold-meter {
+    margin-top: 12px; padding: 10px 12px; border-radius: 12px;
+    background: var(--imp-panel); border: 1px solid var(--imp-line);
+    font-size: 11px; color: var(--tx-3);
+  }
+  .threshold-meter b { color: var(--tx-1); font-size: 12px; }
+  .threshold-meter .bar { margin-top: 6px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.06); position: relative; overflow: hidden; }
+  .threshold-meter .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
+  .threshold-meter .bar i.green { background: var(--imp-accent); width: 38%; }
+  .threshold-meter .bar i.red   { background: var(--imp-danger); width: 62%; right: 0; left: auto; }
+
+  /* long-press sheet */
+  .lp-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+    z-index: 8; display: flex; align-items: flex-end;
+  }
+  .lp-sheet {
+    width: 100%; background: var(--imp-panel);
+    border-top-left-radius: 22px; border-top-right-radius: 22px;
+    padding: 14px 14px calc(env(safe-area-inset-bottom, 8px) + 16px);
+    border-top: 1px solid var(--imp-line);
+  }
+  .lp-sheet .grabber { width: 36px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.18); margin: 0 auto 10px; }
+  .lp-sheet .header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 6px 12px; border-bottom: 1px dashed var(--imp-line); margin-bottom: 8px;
+  }
+  .lp-sheet .header .pill {
+    width: 4px; align-self: stretch; border-radius: 4px; background: var(--imp-warn);
+  }
+  .lp-sheet .header .meta { display: flex; flex-direction: column; min-width: 0; }
+  .lp-sheet .header b { font-size: 14px; color: var(--tx-1); font-weight: 600; line-height: 1.25; }
+  .lp-sheet .header span { font-size: 11px; color: var(--tx-3); }
+
+  .lp-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin-bottom: 10px;
+  }
+  .lp-grid button {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--imp-line);
+    border-radius: 12px; padding: 12px 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: var(--tx-2); font: 600 11px/1.1 inherit; cursor: pointer;
+  }
+  .lp-grid button svg { width: 18px; height: 18px; }
+  .lp-grid button.danger { color: var(--imp-danger); }
+
+  .lp-list { display: flex; flex-direction: column; gap: 2px; }
+  .lp-list button {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 10px; border-radius: 10px;
+    background: transparent; border: 0; color: var(--tx-1);
+    font: 600 14px/1 inherit; text-align: left; cursor: pointer;
+  }
+  .lp-list button .swatches {
+    display: inline-flex; gap: 4px; margin-left: auto;
+  }
+  .lp-list button .swatches .dot { width: 8px; height: 8px; border-radius: 999px; opacity: 0.55; }
+  .lp-list button.danger { color: var(--imp-danger); }
+  .lp-list button svg { width: 16px; height: 16px; color: var(--tx-2); }
+
+  /* undo toast */
+  .undo-toast {
+    position: absolute; left: 16px; right: 16px; bottom: 92px; z-index: 9;
+    background: rgba(20,20,28,0.95); border: 1px solid var(--imp-line);
+    border-radius: 14px; padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 16px 30px -10px rgba(0,0,0,0.6);
+  }
+  .undo-toast .icon-wrap {
+    width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center;
+    background: rgba(52,211,153,0.15); color: var(--imp-accent);
+  }
+  .undo-toast .text { flex: 1; font-size: 13px; color: var(--tx-1); font-weight: 600; }
+  .undo-toast .text small { display: block; color: var(--tx-3); font-weight: 500; font-size: 11px; }
+  .undo-toast .undo-btn {
+    background: transparent; border: 0; color: var(--imp-accent);
+    font: 700 13px/1 inherit; padding: 6px 10px; cursor: pointer;
+  }
+
+  /* mini home for context */
+  .mini-home .group-head { padding: 10px 4px 4px; }
+  .mini-home .group-head h3 { color: var(--tx-2); }
+  .mini-home .group-head .stamp { font-size: 11px; color: var(--tx-3); padding: 2px 8px; border-radius: 999px; background: var(--imp-panel); border: 1px solid var(--imp-line); }
+</style>
+</head>
+<body>
+
+<header class="page">
+  <h1>FedOS Home — Mobile Review</h1>
+  <p>Faithful mockups of the three key mobile views (Home, Edit Task, New Task) reconstructed from the live source, followed by a usability / UX / visual critique and a redesigned proposal that addresses each issue.</p>
+  <div class="meta-row">
+    <span><b>App:</b> http://localhost:3000/?view=home</span>
+    <span><b>Viewport:</b> 360 × 740 (mobile, dark theme &lt; 768px)</span>
+    <span><b>Tokens:</b> bg #14141a · panel #1c1c24 · accent #22c55e</span>
+    <span><b>Date:</b> 7 May 2026</span>
+  </div>
+</header>
+
+<!-- =========================================================== -->
+<!-- 1. CURRENT STATE                                              -->
+<!-- =========================================================== -->
+<section class="block">
+  <h2>1 · Current state</h2>
+  <p class="lede">Reconstructed pixel-faithfully from <code>task-dashboard.tsx</code>, <code>task-card.tsx</code>, <code>bottom-nav.tsx</code>, <code>task-edit-overlay.tsx</code>, and <code>new-task-view.tsx</code>.</p>
+
+  <div class="phones">
+
+    <!-- HOME (current) -->
+    <figure>
+      <div class="phone home">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen">
+          <div class="body">
+            <div class="seg">
+              <button class="active">date</button>
+              <button>priority</button>
+              <button>category</button>
+              <button>project</button>
+            </div>
+
+            <div class="group-head">
+              <svg class="chev icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <h3>Overdue</h3><span class="count">(2)</span><span class="rule"></span>
+            </div>
+            <div class="row"><span class="check"></span><span class="title">Reply to Klara about DEP roadmap</span><span class="pencil"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+            <div class="row"><span class="check"></span><span class="title">Send Q2 OKR draft to Maria</span><span class="pencil"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+
+            <div class="group-head">
+              <svg class="chev icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <h3>Today</h3><span class="count">(4)</span><span class="rule"></span>
+            </div>
+            <div class="row"><span class="check"></span><span class="title">Anthropic partnership sync</span><span class="pencil"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+            <div class="row"><span class="check done"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span><span class="title done">Email partner about beta access</span><span class="pencil"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+            <div class="row"><span class="check"></span><span class="title">Review Cowork demo video edit</span><span class="pencil"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+            <div class="row"><span class="check"></span><span class="title">Prep Empathy Lab brief</span><span class="pencil"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+
+            <div class="group-head">
+              <svg class="chev icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <h3>Tomorrow</h3><span class="count">(2)</span><span class="rule"></span>
+            </div>
+            <div class="row"><span class="check"></span><span class="title">Investor update — May numbers</span><span class="pencil"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+          </div>
+          <nav class="bottom-nav">
+            <button class="active">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
+              home
+            </button>
+            <button>
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              new task
+            </button>
+          </nav>
+        </div>
+      </div>
+      <figcaption><b>Home (current)</b>List view, group toggle, 2-tab nav.</figcaption>
+    </figure>
+
+    <!-- EDIT (current) -->
+    <figure>
+      <div class="phone edit">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen">
+          <div class="body">
+            <div class="topbar">
+              <button class="x"><svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <div class="scroll">
+              <h1 class="title-input">Anthropic partnership sync</h1>
+              <div class="write-preview">
+                <button>write</button>
+                <button class="active">preview</button>
+              </div>
+              <div class="desc">
+                Confirm scope of joint announcement, decide who owns the press timeline, share Cowork demo deck with the Anthropic comms team.
+              </div>
+
+              <div class="section-head"><h2>When</h2><span class="rule"></span></div>
+              <div class="flat-row"><span>Thu, 7 May 2026</span></div>
+
+              <div class="section-head"><h2>Status</h2><span class="rule"></span></div>
+              <div class="tabs">
+                <button>Active</button>
+                <button class="active">Wip</button>
+                <button>Blocked</button>
+                <button>Done</button>
+              </div>
+
+              <div class="section-head"><h2>Priority</h2><span class="rule"></span></div>
+              <div class="tabs">
+                <button>low</button>
+                <button>medium</button>
+                <button class="active">high</button>
+                <button>critical</button>
+              </div>
+
+              <div class="section-head"><h2>Meta</h2><span class="rule"></span></div>
+              <div class="flat-row"><span>Partnerships</span></div>
+              <div class="flat-row"><span>FedOS</span></div>
+              <div class="flat-row"><span style="color:var(--tx-3)">Tags</span></div>
+            </div>
+            <button class="save">Save changes</button>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>Edit task (current)</b>Full-screen overlay, scroll-to-bottom Save.</figcaption>
+    </figure>
+
+    <!-- NEW (current) -->
+    <figure>
+      <div class="phone new">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen">
+          <div class="body">
+            <input class="title-input" placeholder="Add a new task..." />
+            <textarea class="desc-input" placeholder="Description"></textarea>
+
+            <div class="section-head"><h2>When</h2><span class="rule"></span></div>
+            <div class="tabs">
+              <button class="active">Today</button>
+              <button>Tom</button>
+              <button>Week</button>
+              <button>None</button>
+            </div>
+            <div class="flat-row"><span>Thu, 7 May 2026</span></div>
+
+            <div class="section-head"><h2>Priority</h2><span class="rule"></span></div>
+            <div class="tabs">
+              <button>low</button>
+              <button class="active">medium</button>
+              <button>high</button>
+              <button>critical</button>
+            </div>
+
+            <div class="section-head"><h2>Meta</h2><span class="rule"></span></div>
+            <div class="flat-row"><span style="color:var(--tx-3)">Category</span></div>
+            <div class="flat-row"><span style="color:var(--tx-3)">Project</span></div>
+
+            <button class="add-btn">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Add task
+            </button>
+          </div>
+          <nav class="bottom-nav">
+            <button>
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
+              home
+            </button>
+            <button class="active">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              new task
+            </button>
+          </nav>
+        </div>
+      </div>
+      <figcaption><b>New task (current)</b>Inline form, no header, sits above bottom nav.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<!-- =========================================================== -->
+<!-- 2. CRITIQUE                                                   -->
+<!-- =========================================================== -->
+<section class="block">
+  <h2>2 · Critique</h2>
+  <p class="lede">Grouped by lens. Each item carries a severity tag — <span class="severity sev-high">high</span> blocks the job, <span class="severity sev-med">med</span> creates friction, <span class="severity sev-low">low</span> is polish.</p>
+
+  <div class="critique">
+
+    <div class="card">
+      <h3>Usability <span class="pill">does the screen let you do the job?</span></h3>
+      <ul>
+        <li><span class="severity sev-high">high</span> <b>Mobile rows show only the title.</b> <em>Priority, category, due-date, status are all desktop-only (lg:contents). When grouping by date you can't see priority — and vice versa — so you can't actually triage on mobile.</em></li>
+        <li><span class="severity sev-high">high</span> <b>Status &amp; priority can't be changed inline.</b> <em>The pop-overs are desktop-only; the only mobile path is open the editor → tap tab → save → close. 4 taps for what should be 1.</em></li>
+        <li><span class="severity sev-high">high</span> <b>No swipe / long-press actions.</b> <em>Complete and delete are not reachable from the list — you have to enter the editor.</em></li>
+        <li><span class="severity sev-med">med</span> <b>"New task" is a tab, not an action.</b> <em>The bottom nav has only 2 entries (home / new task) and the "new task" path is a full screen instead of a quick-add sheet — heavy for the most-used action.</em></li>
+        <li><span class="severity sev-med">med</span> <b>No search, no filter, no sort.</b> <em>Once the list passes ~30 items the only tool is collapse-the-group; you can't find a known task quickly.</em></li>
+        <li><span class="severity sev-low">low</span> <b>Edit pencil overlaps the row tap target.</b> <em>Whole row should open the editor; pencil is redundant icon noise.</em></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>UX &amp; information architecture <span class="pill">does it match how the user thinks?</span></h3>
+      <ul>
+        <li><span class="severity sev-high">high</span> <b>No "what matters now" surface.</b> <em>The first thing you see is a 4-way group toggle, not "you have 2 overdue, 4 due today". A task app should answer the standing question first.</em></li>
+        <li><span class="severity sev-med">med</span> <b>Editor and creator diverge.</b> <em>Editor has Status; creator doesn't. Editor has tags, source_type, source_ref; creator doesn't. New tasks always start as "active" with no way to set status — surprising.</em></li>
+        <li><span class="severity sev-med">med</span> <b>Save lives at the bottom of a long scroll.</b> <em>On a phone with software keyboard you must scroll past Status / Priority / Meta to commit. A sticky save in the header would cut the loop.</em></li>
+        <li><span class="severity sev-med">med</span> <b>"Done" tasks just sort to the bottom.</b> <em>They still occupy the same group, padding the list. Hide-by-default with a "show 3 completed" toggle is more honest.</em></li>
+        <li><span class="severity sev-low">low</span> <b>"Sometime" bucket is hidden by sort.</b> <em>Tasks without a date never appear before "Today" so users assume they're lost.</em></li>
+        <li><span class="severity sev-low">low</span> <b>Group toggle resets to "by date" via URL param.</b> <em>User preference doesn't persist between sessions.</em></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Visual design <span class="pill">does it look intentional?</span></h3>
+      <ul>
+        <li><span class="severity sev-med">med</span> <b>Italic-bold placeholder.</b> <em>"Add a new task..." in italic + 26px bold reads like a heading the user accidentally bolded; a plain regular weight placeholder is calmer.</em></li>
+        <li><span class="severity sev-med">med</span> <b>Hairlines do all the work.</b> <em>Section headers, rows, tabs are separated only by 1-px lines. With nothing else to anchor the eye, the screen feels like a long ledger.</em></li>
+        <li><span class="severity sev-med">med</span> <b>Native date input + native &lt;select&gt;.</b> <em>Inconsistent typography vs. the rest of the app and unstyled in dark mode (the date picker icon is filtered, but the chevrons differ).</em></li>
+        <li><span class="severity sev-low">low</span> <b>One accent color carries every "active" state.</b> <em>Group toggle, write/preview, status, priority, primary button — all emerald. Hierarchy collapses; nothing reads as "do this next".</em></li>
+        <li><span class="severity sev-low">low</span> <b>Status colors only appear in dropdowns (mobile-hidden).</b> <em>The carefully-configured status / priority palettes are invisible on the most-used surface.</em></li>
+        <li><span class="severity sev-low">low</span> <b>Bottom nav has 2 items in a 2-col grid.</b> <em>On a 360 px screen those buttons are ~170 px wide, far past the comfortable thumb target — they look unintentional, like "we'll add more later".</em></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Accessibility &amp; touch <span class="pill">WCAG / Apple HIG basics</span></h3>
+      <ul>
+        <li><span class="severity sev-med">med</span> <b>14-px section labels at 0.08em uppercase</b> with the lowest-contrast token (#71717a on #14141a → 4.6:1). Just above the AA floor; one render tweak away from failing.</li>
+        <li><span class="severity sev-med">med</span> <b>Edit pencil is 32×32 px.</b> Below Apple's 44 pt minimum and Google's 48 dp minimum. Easy to mis-tap when adjacent to the checkbox.</li>
+        <li><span class="severity sev-low">low</span> <b>Bottom nav covers content.</b> Padding-bottom is 28px (`pb-28`) but inline forms (e.g. New Task) extend beneath it; on small screens the Save button can sit under the nav.</li>
+        <li><span class="severity sev-low">low</span> <b>No haptic / no completed-state toast.</b> Tapping a checkbox is silent; the only feedback is a tiny "Updating..." pill in the corner.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- =========================================================== -->
+<!-- 3. IMPROVED MOCKUPS                                           -->
+<!-- =========================================================== -->
+<section class="block">
+  <h2>3 · Proposed improvements</h2>
+  <p class="lede">Same component vocabulary, tightened information density, more useful first screen.</p>
+  <div class="legend">
+    <span><span class="dot crit"></span>critical</span>
+    <span><span class="dot high"></span>high</span>
+    <span><span class="dot med"></span>medium</span>
+    <span><span class="dot low"></span>low</span>
+  </div>
+
+  <div class="phones">
+
+    <!-- IMPROVED HOME -->
+    <figure>
+      <div class="phone imp home">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen">
+          <div class="topbar">
+            <div class="greet">
+              <b>Good morning, Federico</b>
+              <span>Thu 7 May · week 19</span>
+            </div>
+            <div class="iconbtn">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9Z"/><path d="M10 21h4"/></svg>
+            </div>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi danger"><b>2</b><span>overdue</span></div>
+            <div class="kpi warn"><b>4</b><span>today</span></div>
+            <div class="kpi"><b>11</b><span>upcoming</span></div>
+          </div>
+
+          <div class="search">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <span>Search tasks…</span>
+          </div>
+
+          <div class="seg-pill">
+            <button class="active">Date</button>
+            <button>Priority</button>
+            <button>Project</button>
+            <button>Category</button>
+          </div>
+
+          <div class="scroll-wrap">
+            <div class="group-head">
+              <svg class="chev icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <h3>Overdue</h3><span class="count">2</span><span class="rule"></span>
+            </div>
+            <div class="row-card crit">
+              <span class="left-bar"></span>
+              <span class="check"></span>
+              <div>
+                <div class="title">Reply to Klara about DEP roadmap</div>
+                <div class="meta">
+                  <span class="chip over">2d late</span>
+                  <span class="chip"><span class="dot" style="background:var(--imp-danger)"></span>critical</span>
+                  <span class="chip"><span class="dot" style="background:#a78bfa"></span>Strategy</span>
+                </div>
+              </div>
+            </div>
+            <div class="row-card high">
+              <span class="left-bar"></span>
+              <span class="check"></span>
+              <div>
+                <div class="title">Send Q2 OKR draft to Maria</div>
+                <div class="meta">
+                  <span class="chip over">1d late</span>
+                  <span class="chip"><span class="dot" style="background:var(--imp-warn)"></span>high</span>
+                  <span class="chip"><span class="dot" style="background:#fb923c"></span>FedOS</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="group-head" style="margin-top:6px">
+              <svg class="chev icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <h3>Today</h3><span class="count">4</span>
+              <span class="stamp">Thu 7 May</span>
+              <span class="rule"></span>
+            </div>
+            <div class="row-card high">
+              <span class="left-bar"></span>
+              <span class="check"></span>
+              <div>
+                <div class="title">Anthropic partnership sync</div>
+                <div class="meta">
+                  <span class="chip due">11:00 AM</span>
+                  <span class="chip"><span class="dot" style="background:var(--imp-warn)"></span>high</span>
+                  <span class="chip"><span class="dot" style="background:#34d399"></span>Partnerships</span>
+                </div>
+              </div>
+            </div>
+            <div class="row-card med">
+              <span class="left-bar"></span>
+              <span class="check"></span>
+              <div>
+                <div class="title">Review Cowork demo video edit</div>
+                <div class="meta">
+                  <span class="chip"><span class="dot" style="background:var(--imp-accent-2)"></span>medium</span>
+                  <span class="chip"><span class="dot" style="background:#34d399"></span>Cowork</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fab">+</div>
+
+          <nav class="nav">
+            <button class="active">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
+              Home
+            </button>
+            <button>
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              Search
+            </button>
+            <button>
+              <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Calendar
+            </button>
+            <button>
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+              Me
+            </button>
+          </nav>
+        </div>
+      </div>
+      <figcaption><b>Home (proposed)</b>Greeting + KPI strip · search bar · richer cards · floating "+" · 4-tab nav.</figcaption>
+    </figure>
+
+    <!-- IMPROVED EDIT -->
+    <figure>
+      <div class="phone imp edit">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen">
+          <div class="topbar">
+            <div class="left">
+              <button>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <span class="crumb">Edit · <b>Partnerships</b></span>
+            </div>
+            <button class="save">Save</button>
+          </div>
+
+          <div class="body">
+            <h1>Anthropic partnership sync</h1>
+            <div class="summary">
+              <span class="chip"><span class="dot" style="background:var(--imp-warn)"></span>high</span>
+              <span class="chip"><span class="dot" style="background:var(--imp-accent-2)"></span>Wip</span>
+              <span class="chip"><svg class="icon" style="width:12px;height:12px" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18"/></svg>Today · 11:00</span>
+              <span class="chip"><span class="dot" style="background:#34d399"></span>Partnerships</span>
+            </div>
+
+            <div class="desc-card">
+              <div class="toolbar">
+                <button class="active"><b>B</b></button>
+                <button><i>I</i></button>
+                <button><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></button>
+                <button>•≡</button>
+                <button>1.</button>
+                <button style="margin-left:auto; background: rgba(255,255,255,0.04); color: var(--tx-2); padding: 0 8px; width: auto; font-size: 11px;">Preview</button>
+              </div>
+              <div class="desc-text">Confirm scope of joint announcement, decide who owns the press timeline, share Cowork demo deck with the Anthropic comms team.</div>
+            </div>
+
+            <div class="field">
+              <p class="field-label">Priority</p>
+              <div class="seg-color">
+                <button class="low">Low</button>
+                <button class="med">Med</button>
+                <button class="high active">High</button>
+                <button class="crit">Crit</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <p class="field-label">Status</p>
+              <div class="seg-status">
+                <button>Active</button>
+                <button class="active">Wip</button>
+                <button>Blocked</button>
+                <button class="done">Done</button>
+              </div>
+            </div>
+
+            <div class="field grid2">
+              <div class="input-cell"><span class="label">When</span><span class="value">Today</span></div>
+              <div class="input-cell"><span class="label">Project</span><span class="value">FedOS</span></div>
+              <div class="input-cell"><span class="label">Category</span><span class="value"><span class="dot" style="display:inline-block; width:6px; height:6px; border-radius:999px; background:#34d399; margin-right:6px"></span>Partnerships</span></div>
+              <div class="input-cell"><span class="label">Tags</span><span class="value" style="color:var(--tx-3)">+ add</span></div>
+            </div>
+          </div>
+
+          <div class="save-bar">
+            <button class="secondary">Discard</button>
+            <button class="primary">Save changes</button>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>Edit task (proposed)</b>Sticky save · summary chip strip · color-coded segmented controls · grid for meta · destructive at edge.</figcaption>
+    </figure>
+
+    <!-- IMPROVED NEW -->
+    <figure>
+      <div class="phone imp new">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen">
+          <div class="topbar">
+            <div class="left">
+              <button>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              </button>
+              <span class="crumb">New task</span>
+            </div>
+            <div class="step">
+              <span class="dot active"></span><span class="dot active"></span><span class="dot"></span> ready
+            </div>
+          </div>
+
+          <div class="body">
+            <input class="title-input" placeholder="What needs to happen?" value="Draft Anthropic partnership memo" />
+
+            <div class="quick-row">
+              <span class="chip active"><svg class="icon" viewBox="0 0 24 24"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>Today</span>
+              <span class="chip">Tomorrow</span>
+              <span class="chip">This week</span>
+              <span class="chip">No date</span>
+            </div>
+            <div class="quick-row">
+              <span class="chip"><span class="dot" style="display:inline-block;width:6px;height:6px;border-radius:999px;background:var(--tx-3);"></span>Low</span>
+              <span class="chip active"><span class="dot" style="display:inline-block;width:6px;height:6px;border-radius:999px;background:var(--imp-accent-2);"></span>Medium</span>
+              <span class="chip"><span class="dot" style="display:inline-block;width:6px;height:6px;border-radius:999px;background:var(--imp-warn);"></span>High</span>
+              <span class="chip"><span class="dot" style="display:inline-block;width:6px;height:6px;border-radius:999px;background:var(--imp-danger);"></span>Critical</span>
+            </div>
+
+            <div class="desc-card">
+              Add a few notes — bullet points, links, anything that helps future-you start the work.
+            </div>
+
+            <div class="accordion">
+              <div class="row">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M3 7h18M6 7v13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7"/></svg>
+                <span class="label">Project</span>
+                <span class="value">FedOS ›</span>
+              </div>
+              <div class="row">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M3 12l4 4L21 4"/></svg>
+                <span class="label">Category</span>
+                <span class="value"><span class="dot" style="background:#34d399"></span>Partnerships ›</span>
+              </div>
+              <div class="row">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M20 12V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7"/><path d="M16 17l2 2 4-4"/></svg>
+                <span class="label">Status</span>
+                <span class="value">Active ›</span>
+              </div>
+              <div class="row">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M20 12H4"/><path d="M16 6l4 6-4 6"/></svg>
+                <span class="label">Tags</span>
+                <span class="value" style="color:var(--tx-3)">+ add ›</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="add-bar">
+            <button class="save-add">Save &amp; new</button>
+            <button class="add">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
+              Add task
+            </button>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>New task (proposed)</b>Date &amp; priority as one-tap chips · description optional · meta collapsed · "Save &amp; new" for batching.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<!-- =========================================================== -->
+<!-- 4. CHANGE TABLE                                               -->
+<!-- =========================================================== -->
+<section class="block">
+  <h2>4 · What changed &amp; why</h2>
+  <p class="lede">Each redesign decision tied back to a specific critique item.</p>
+
+  <table class="deltas">
+    <thead><tr><th style="width:18%">Screen</th><th style="width:30%">Change</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><b>Home</b></td><td>Greeting line + KPI strip (overdue / today / upcoming)</td><td><em>Answers the standing question — "what matters now?" — before the user has to think about grouping.</em></td></tr>
+      <tr><td><b>Home</b></td><td>Search bar above the list</td><td><em>Critique 2.usability — once you pass ~30 tasks the only tool was collapse-the-group.</em></td></tr>
+      <tr><td><b>Home</b></td><td>Pill-style group toggle (scrollable)</td><td><em>Less heavy than the boxed 4-col segmented control; leaves room for more groupings later.</em></td></tr>
+      <tr><td><b>Home</b></td><td>Task rows become small cards with priority bar, due chip, category chip</td><td><em>Restores the metadata that was hidden on mobile so triage is possible without entering the editor.</em></td></tr>
+      <tr><td><b>Home</b></td><td>Floating "+" FAB</td><td><em>"New task" is the most-used action; promote it from a tab to a thumb-zone primary.</em></td></tr>
+      <tr><td><b>Home</b></td><td>4-item bottom nav (Home · Search · Calendar · Me)</td><td><em>2 items in a 2-col grid look unintentional and misuse a 360 px width.</em></td></tr>
+      <tr><td><b>Edit</b></td><td>Sticky top bar with Back · breadcrumb · Save</td><td><em>Save was at the bottom of a long scroll behind the keyboard. Now committable from anywhere.</em></td></tr>
+      <tr><td><b>Edit</b></td><td>Summary chip row directly under the title</td><td><em>You can see priority/status/due/category at a glance instead of scrolling four sections.</em></td></tr>
+      <tr><td><b>Edit</b></td><td>Status &amp; priority become color-coded segmented controls</td><td><em>The status/priority palettes were configured in the DB but invisible on mobile — surface them.</em></td></tr>
+      <tr><td><b>Edit</b></td><td>2×2 meta grid (When · Project · Category · Tags)</td><td><em>Replaces 4 stacked rows with one compact unit; shorter scroll.</em></td></tr>
+      <tr><td><b>Edit</b></td><td>Discard / Save bar at the bottom</td><td><em>Destructive action explicit, not hidden behind an X. Mirrors desktop footer.</em></td></tr>
+      <tr><td><b>New</b></td><td>Sheet-style header with X and "ready" progress dots</td><td><em>Form has no header today, so it feels untethered — adds a clear escape hatch and "you've filled the required bits" feedback.</em></td></tr>
+      <tr><td><b>New</b></td><td>Date &amp; priority as one-tap chip rows</td><td><em>4-tab segmented controls take 2 rows of vertical space; chips give the same affordance in less.</em></td></tr>
+      <tr><td><b>New</b></td><td>Description shrinks to a card &amp; meta collapses into a list</td><td><em>The minimum task you should be able to capture is "title + when". Hide the rest until it's needed.</em></td></tr>
+      <tr><td><b>New</b></td><td>"Save &amp; new" alongside "Add task"</td><td><em>Power-user batching — file 5 follow-ups from a meeting without leaving the form.</em></td></tr>
+      <tr><td><b>All</b></td><td>Two-tier accent (emerald primary, sky secondary, amber/rose for state)</td><td><em>Emerald previously did everything — segments, tabs, statuses, primary buttons. Splitting roles restores hierarchy.</em></td></tr>
+      <tr><td><b>All</b></td><td>Cards over hairlines</td><td><em>Replaces the "ledger of 1-px lines" feel with grouped surfaces; easier to scan.</em></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =========================================================== -->
+<!-- 5. GESTURE MOCKUPS — swipe & long-press                       -->
+<!-- =========================================================== -->
+<section class="block">
+  <h2>5 · Gesture proposal — swipe &amp; long-press</h2>
+  <p class="lede">Resolves the <span class="severity sev-high">high</span> "no swipe / long-press actions" critique. Same task card; three interaction states. Swipe-right completes (low-risk, frequent); swipe-left deletes (destructive, requires past-threshold or undo); long-press opens a context sheet for everything else (status, priority, category, edit).</p>
+
+  <div class="phones">
+
+    <!-- 5.1 SWIPE RIGHT — COMPLETE -->
+    <figure>
+      <div class="phone imp home">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen mini-home">
+          <div class="topbar">
+            <div class="greet">
+              <b>Today</b>
+              <span>Thu 7 May · 4 tasks</span>
+            </div>
+            <div class="iconbtn">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            </div>
+          </div>
+
+          <div class="scroll-wrap" style="padding-top:6px">
+            <div class="group-head">
+              <svg class="chev icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <h3>Today</h3><span class="count">4</span><span class="stamp">Thu 7 May</span><span class="rule"></span>
+            </div>
+
+            <div class="gesture-row right-swipe">
+              <div class="actions">
+                <span class="left">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                  Complete
+                </span>
+              </div>
+              <div class="card">
+                <span class="check"></span>
+                <div>
+                  <div class="title">Anthropic partnership sync</div>
+                  <div class="meta">
+                    <span class="chip due">11:00 AM</span>
+                    <span class="chip"><span class="dot" style="background:var(--imp-warn)"></span>high</span>
+                  </div>
+                </div>
+              </div>
+              <span class="gesture-arrow right"></span>
+              <span class="gesture-finger right">→</span>
+            </div>
+
+            <div class="gesture-row">
+              <div class="card">
+                <span class="check"></span>
+                <div>
+                  <div class="title">Review Cowork demo video edit</div>
+                  <div class="meta">
+                    <span class="chip"><span class="dot" style="background:var(--imp-accent-2)"></span>medium</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="threshold-meter">
+              <b>Pull threshold · 25% of width</b>
+              <div class="bar"><i class="green"></i></div>
+              <div style="margin-top:6px">Past 25% → release commits. Below 25% → snaps back. Haptic <em>tick</em> at the threshold.</div>
+            </div>
+          </div>
+
+          <nav class="nav">
+            <button class="active"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v10h14V10"/></svg>Home</button>
+            <button><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search</button>
+            <button><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendar</button>
+            <button><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Me</button>
+          </nav>
+        </div>
+      </div>
+      <figcaption><b>Swipe right → Complete</b>Green reveal underneath, finger drags east. One thumb-stroke; no editor visit.</figcaption>
+    </figure>
+
+    <!-- 5.2 SWIPE LEFT — DELETE w/ undo -->
+    <figure>
+      <div class="phone imp home">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen mini-home">
+          <div class="topbar">
+            <div class="greet">
+              <b>Today</b>
+              <span>Thu 7 May · 4 tasks</span>
+            </div>
+            <div class="iconbtn">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            </div>
+          </div>
+
+          <div class="scroll-wrap" style="padding-top:6px">
+            <div class="group-head">
+              <svg class="chev icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <h3>Today</h3><span class="count">4</span><span class="stamp">Thu 7 May</span><span class="rule"></span>
+            </div>
+
+            <div class="gesture-row">
+              <div class="card">
+                <span class="check"></span>
+                <div>
+                  <div class="title">Anthropic partnership sync</div>
+                  <div class="meta">
+                    <span class="chip due">11:00 AM</span>
+                    <span class="chip"><span class="dot" style="background:var(--imp-warn)"></span>high</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="gesture-row left-swipe">
+              <div class="actions">
+                <span class="left" style="background: rgba(255,255,255,0.03); color: transparent">·</span>
+                <span class="right">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                  Delete
+                </span>
+              </div>
+              <div class="card">
+                <span class="check"></span>
+                <div>
+                  <div class="title">Old reminder: clear inbox</div>
+                  <div class="meta">
+                    <span class="chip"><span class="dot" style="background:var(--tx-3)"></span>low</span>
+                  </div>
+                </div>
+              </div>
+              <span class="gesture-arrow left"></span>
+              <span class="gesture-finger left">←</span>
+            </div>
+
+            <div class="threshold-meter">
+              <b>Two-stage delete</b>
+              <div class="bar"><i class="red"></i></div>
+              <div style="margin-top:6px">25–60% → reveal Delete button. Past 60% → commit + undo toast (5s). Stronger haptic at 60%.</div>
+            </div>
+          </div>
+
+          <div class="undo-toast">
+            <span class="icon-wrap">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            </span>
+            <span class="text">Task deleted<small>"Old reminder: clear inbox"</small></span>
+            <button class="undo-btn">Undo</button>
+          </div>
+
+          <nav class="nav">
+            <button class="active"><svg class="icon" viewBox="0 0 24 24"><path d="M3 12L12 4l9 8"/><path d="M5 10v10h14V10"/></svg>Home</button>
+            <button><svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search</button>
+            <button><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendar</button>
+            <button><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Me</button>
+          </nav>
+        </div>
+      </div>
+      <figcaption><b>Swipe left → Delete</b>Red reveal · 60% threshold to commit · 5-second Undo toast guards an irreversible action.</figcaption>
+    </figure>
+
+    <!-- 5.3 LONG-PRESS — context sheet -->
+    <figure>
+      <div class="phone imp home">
+        <div class="notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></svg>
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/></svg>
+          </span>
+        </div>
+        <div class="screen mini-home" style="position:relative">
+          <div class="topbar">
+            <div class="greet">
+              <b>Today</b>
+              <span>Thu 7 May · 4 tasks</span>
+            </div>
+            <div class="iconbtn">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            </div>
+          </div>
+
+          <div class="scroll-wrap" style="padding-top:6px">
+            <div class="group-head">
+              <svg class="chev icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              <h3>Today</h3><span class="count">4</span><span class="stamp">Thu 7 May</span><span class="rule"></span>
+            </div>
+
+            <div class="gesture-row">
+              <div class="card" style="box-shadow: 0 0 0 2px rgba(52,211,153,0.45), 0 14px 30px -10px rgba(52,211,153,0.35);">
+                <span class="check"></span>
+                <div>
+                  <div class="title">Anthropic partnership sync</div>
+                  <div class="meta">
+                    <span class="chip due">11:00 AM</span>
+                    <span class="chip"><span class="dot" style="background:var(--imp-warn)"></span>high</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="gesture-row">
+              <div class="card">
+                <span class="check"></span>
+                <div>
+                  <div class="title">Review Cowork demo video edit</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- long-press overlay -->
+          <div class="lp-overlay">
+            <div class="lp-sheet">
+              <div class="grabber"></div>
+              <div class="header">
+                <span class="pill"></span>
+                <div class="meta">
+                  <b>Anthropic partnership sync</b>
+                  <span>High · Today 11:00 · Partnerships</span>
+                </div>
+              </div>
+
+              <div class="lp-grid">
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                  Complete
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2 2 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  Edit
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  Reschedule
+                </button>
+                <button class="danger">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                  Delete
+                </button>
+              </div>
+
+              <div class="lp-list">
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  Status
+                  <span class="swatches">
+                    <span class="dot" style="background:#a3a3a3"></span>
+                    <span class="dot" style="background:var(--imp-accent-2); opacity:1"></span>
+                    <span class="dot" style="background:var(--imp-warn)"></span>
+                    <span class="dot" style="background:var(--imp-accent)"></span>
+                  </span>
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M3 12h12"/><path d="M3 18h6"/></svg>
+                  Priority
+                  <span class="swatches">
+                    <span class="dot" style="background:var(--tx-3)"></span>
+                    <span class="dot" style="background:var(--imp-accent-2)"></span>
+                    <span class="dot" style="background:var(--imp-warn); opacity:1"></span>
+                    <span class="dot" style="background:var(--imp-danger)"></span>
+                  </span>
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></svg>
+                  Category · Partnerships
+                </button>
+                <button>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12l2 2 4-4"/></svg>
+                  Move to project · FedOS
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>Long-press → Context sheet</b>Card lifts with a glow + haptic. Sheet exposes Complete · Edit · Reschedule · Delete plus inline status/priority/category — every action that was previously trapped in the editor.</figcaption>
+    </figure>
+
+  </div>
+
+  <table class="deltas">
+    <thead><tr><th style="width:18%">Gesture</th><th style="width:24%">Outcome</th><th>Behavior &amp; safeguards</th></tr></thead>
+    <tbody>
+      <tr><td><b>Swipe right</b></td><td>Complete (or un-complete)</td><td><em>Reveal at 12% · commit at 25% of card width · light haptic at threshold · row collapses with a strikethrough crossfade · undo via long-press menu.</em></td></tr>
+      <tr><td><b>Swipe left</b></td><td>Delete</td><td><em>Reveal at 12% · button visible at 25–60% · commit only past 60% (or by tapping the revealed Delete button) · medium haptic at 60% · 5-second Undo toast guards the destructive action.</em></td></tr>
+      <tr><td><b>Long-press</b></td><td>Context sheet (all actions)</td><td><em>~400ms hold · card lifts (scale 1.02) with shadow + emerald glow + medium haptic · half-sheet covers ~55% of screen · all 7 task actions accessible · drag-down or tap-out to dismiss.</em></td></tr>
+      <tr><td><b>Tap</b></td><td>Open editor (full screen)</td><td><em>Unchanged from today — the row tap target is the whole card minus the checkbox.</em></td></tr>
+      <tr><td><b>Tap checkbox</b></td><td>Toggle complete</td><td><em>Kept as an explicit, accessible alternative to the swipe gesture (matches `role="checkbox"` semantics already in the code).</em></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer style="max-width:1480px; margin:0 auto; color: var(--muted); font-size:12px; border-top:1px solid var(--hairline); padding-top:18px;">
+  Mockups are static HTML/CSS reconstructions of the live components — not screenshots. Built from the source files in <code>src/components/</code>.
+</footer>
+
+</body>
+</html>

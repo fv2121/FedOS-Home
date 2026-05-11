@@ -35,7 +35,7 @@ import {
   CREATE_TASK_DUE_PRESETS,
   presetDueDate,
   type CreateTaskDuePreset,
-} from "./create-task-model";
+} from "../model/create-task-model";
 import type {
   Category,
   PriorityConfig,
@@ -46,7 +46,7 @@ import type {
   TaskStatus,
   TaskUpdateFields,
   VisibleTaskRow,
-} from "./dashboard-types";
+} from "../model/dashboard-types";
 import { MarkdownPreview } from "./task-description-markdown";
 import {
   DescriptionEditor,

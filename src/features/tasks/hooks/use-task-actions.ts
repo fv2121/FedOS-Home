@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { CreateTaskInput } from "./create-task-model";
-import type { TaskRow, TaskUpdateFields } from "./dashboard-types";
+import type { CreateTaskInput } from "../model/create-task-model";
+import type { TaskRow, TaskUpdateFields } from "../model/dashboard-types";
 
 export function useTaskActions(
   setTasks: React.Dispatch<React.SetStateAction<TaskRow[]>>,

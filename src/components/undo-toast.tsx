@@ -12,7 +12,7 @@ type Props = {
 
 export function UndoToast({ taskTitle, durationMs, onUndo }: Props) {
   const [progress, setProgress] = useState(100);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(0);
 
   useEffect(() => {
     startRef.current = Date.now();

@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FedOS Home — Dark UI Explorations</title>
+<style>
+  /* -------- shell / page chrome -------- */
+  :root {
+    --page-bg: #0e0e10;
+    --page-fg: #e8e8ea;
+    --muted: #8a8a92;
+    --hairline: rgba(255,255,255,0.08);
+    --card-w: 360px;
+    --card-h: 720px;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Manrope", system-ui, sans-serif;
+  }
+  html, body { background: var(--page-bg); color: var(--page-fg); margin: 0; }
+  body { padding: 32px 24px 64px; }
+  header { max-width: 1400px; margin: 0 auto 28px; }
+  header h1 { font-size: 22px; letter-spacing: -0.02em; margin: 0 0 4px; font-weight: 600; }
+  header p  { color: var(--muted); margin: 0; font-size: 14px; max-width: 720px; line-height: 1.5; }
+  .controls {
+    margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap;
+    border-top: 1px solid var(--hairline); padding-top: 16px;
+  }
+  .controls button {
+    appearance: none; background: transparent; color: var(--page-fg);
+    border: 1px solid var(--hairline); padding: 6px 12px;
+    border-radius: 999px; font-size: 12px; cursor: pointer; font-family: inherit;
+    transition: background .15s, border-color .15s;
+  }
+  .controls button:hover { border-color: rgba(255,255,255,0.25); }
+  .controls button.active { background: #fff; color: #000; border-color: #fff; }
+
+  .lab {
+    max-width: 1600px; margin: 0 auto;
+    display: grid; gap: 28px;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    align-items: start;
+  }
+  .lab > section { display: flex; flex-direction: column; gap: 12px; }
+  .lab .meta h2 { font-size: 14px; margin: 0 0 2px; letter-spacing: -0.01em; }
+  .lab .meta p  { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.5; }
+  .lab .meta .swatches { display: flex; gap: 6px; margin-top: 8px; }
+  .lab .meta .swatches span {
+    width: 18px; height: 18px; border-radius: 6px; display: inline-block;
+    border: 1px solid var(--hairline);
+  }
+
+  /* -------- phone frame -------- */
+  .phone {
+    width: var(--card-w); height: var(--card-h);
+    border-radius: 36px; overflow: hidden; position: relative;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 8px 24px -8px rgba(0,0,0,0.5);
+    isolation: isolate;
+  }
+  .phone .notch {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 90px; height: 22px; background: #000; border-radius: 999px;
+    z-index: 5;
+  }
+  .phone .screen { width: 100%; height: 100%; overflow: hidden; position: relative; }
+
+  /* density modifiers applied to body via JS */
+  body.density-cozy   .phone { --row-pad-y: 12px; --row-pad-x: 14px; --row-gap: 10px; --type-title: 14.5px; --type-meta: 11.5px; }
+  body.density-tight  .phone { --row-pad-y: 8px;  --row-pad-x: 12px; --row-gap: 6px;  --type-title: 13.5px; --type-meta: 11px;   }
+  body.density-cli    .phone { --row-pad-y: 4px;  --row-pad-x: 10px; --row-gap: 1px;  --type-title: 12.5px; --type-meta: 10.5px; }
+
+  /* -------- shared dashboard primitives (overridden per variant) -------- */
+  .dash {
+    width: 100%; height: 100%;
+    display: grid; grid-template-rows: auto auto 1fr auto auto;
+    font-size: 14px; -webkit-font-smoothing: antialiased;
+  }
+  .dash .top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 18px 10px;
+  }
+  .dash .top h3 { margin: 0; font-size: 17px; letter-spacing: -0.015em; font-weight: 600; }
+  .dash .top .greeting { color: var(--v-muted, #888); font-size: 11.5px; margin-top: 2px; }
+  .dash .top .avatar {
+    width: 30px; height: 30px; border-radius: 999px;
+    background: linear-gradient(135deg, #ff8a4c, #d946ef);
+    display: grid; place-items: center; font-size: 11px; font-weight: 600; color: white;
+  }
+  .dash .filters {
+    padding: 6px 14px 10px;
+    display: flex; gap: 6px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .dash .filters::-webkit-scrollbar { display: none; }
+  .dash .chip {
+    flex: 0 0 auto;
+    padding: 5px 10px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 500;
+    border: 1px solid var(--v-chip-border, rgba(255,255,255,0.1));
+    color: var(--v-chip-fg, #c0c0c5);
+    background: var(--v-chip-bg, transparent);
+    white-space: nowrap;
+  }
+  .dash .chip.on {
+    background: var(--v-chip-on-bg, #fff); color: var(--v-chip-on-fg, #000);
+    border-color: var(--v-chip-on-bg, #fff);
+  }
+  .dash .group-label {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--v-muted, #888); padding: 10px 18px 4px;
+    font-weight: 600;
+  }
+  .dash .list { padding: 0 12px 96px; overflow-y: auto; }
+  .dash .row {
+    display: grid; grid-template-columns: 18px 1fr auto; gap: 10px;
+    padding: var(--row-pad-y, 12px) var(--row-pad-x, 14px);
+    margin-bottom: var(--row-gap, 10px);
+    border-radius: 14px;
+    background: var(--v-row-bg, rgba(255,255,255,0.03));
+    border: 1px solid var(--v-row-border, transparent);
+    align-items: center;
+  }
+  .dash .row .check {
+    width: 16px; height: 16px; border-radius: 999px;
+    border: 1.5px solid var(--v-check, #4a4a52);
+    margin-top: 2px;
+  }
+  .dash .row.done .check {
+    background: var(--v-accent, #fff);
+    border-color: var(--v-accent, #fff);
+  }
+  .dash .row .title {
+    font-size: var(--type-title, 14.5px); font-weight: 500; line-height: 1.25;
+    color: var(--v-text, #e8e8ea);
+  }
+  .dash .row.done .title { text-decoration: line-through; color: var(--v-muted, #888); }
+  .dash .row .meta {
+    font-size: var(--type-meta, 11.5px); color: var(--v-muted, #888);
+    display: flex; gap: 8px; align-items: center; margin-top: 3px;
+  }
+  .dash .row .meta .dot { width: 6px; height: 6px; border-radius: 999px; }
+  .dash .row .pri {
+    font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 999px;
+    letter-spacing: 0.02em; white-space: nowrap;
+  }
+  .dash .row .pri.high { background: rgba(244,114,114,0.14); color: #fca5a5; }
+  .dash .row .pri.med  { background: rgba(250,204,21,0.14);  color: #fde68a; }
+  .dash .row .pri.low  { background: rgba(148,163,184,0.14); color: #cbd5e1; }
+  .dash .row .pri.crit { background: rgba(244,63,94,0.18);   color: #fda4af; }
+
+  .dash .quickadd {
+    margin: 0 12px 8px; padding: 8px 10px;
+    border-radius: 14px;
+    background: var(--v-input-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--v-input-border, rgba(255,255,255,0.06));
+    display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  }
+  .dash .quickadd input {
+    background: transparent; border: 0; color: var(--v-text, #e8e8ea);
+    font-size: 13px; outline: none; padding: 4px 6px; font-family: inherit;
+  }
+  .dash .quickadd input::placeholder { color: var(--v-muted, #888); }
+  .dash .quickadd .add-btn {
+    width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+    background: var(--v-accent, #fff); color: var(--v-accent-fg, #000);
+    font-size: 16px; font-weight: 600;
+  }
+  .dash .nav {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px;
+    padding: 6px 10px 14px;
+    border-top: 1px solid var(--v-hairline, rgba(255,255,255,0.06));
+  }
+  .dash .nav button {
+    appearance: none; background: transparent; border: 0;
+    color: var(--v-muted, #888); font-size: 10.5px; padding: 6px 0;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-family: inherit; cursor: pointer; border-radius: 10px;
+  }
+  .dash .nav button.on {
+    color: var(--v-accent-fg, #000); background: var(--v-accent, #fff);
+  }
+  .dash .nav .ico { width: 16px; height: 16px; display: inline-block; opacity: 0.85; }
+
+  /* ============================================================ */
+  /* VARIANT 1 — Linear / Vercel monochrome                        */
+  /* ============================================================ */
+  .v-linear .phone .screen,
+  .v-linear .desktop .screen {
+    background: #0a0a0a;
+    --v-text: #ededed;
+    --v-muted: #7a7a7d;
+    --v-hairline: rgba(255,255,255,0.07);
+    --v-row-bg: transparent;
+    --v-row-border: rgba(255,255,255,0.06);
+    --v-chip-border: rgba(255,255,255,0.1);
+    --v-chip-on-bg: #fafafa;
+    --v-chip-on-fg: #0a0a0a;
+    --v-input-bg: rgba(255,255,255,0.025);
+    --v-input-border: rgba(255,255,255,0.07);
+    --v-accent: #fafafa;
+    --v-accent-fg: #0a0a0a;
+    --v-check: #3a3a3d;
+  }
+  .v-linear .row + .row { border-top: 0; }
+  .v-linear .row { border: 1px solid rgba(255,255,255,0.05); }
+
+  /* ============================================================ */
+  /* VARIANT 2 — OLED true-black + cyan accent                     */
+  /* ============================================================ */
+  .v-oled .phone .screen,
+  .v-oled .desktop .screen {
+    background: #000;
+    --v-text: #f4f4f5;
+    --v-muted: #6c6c73;
+    --v-hairline: rgba(255,255,255,0.05);
+    --v-row-bg: #0b0b0d;
+    --v-row-border: transparent;
+    --v-chip-border: rgba(255,255,255,0.06);
+    --v-chip-bg: #0b0b0d;
+    --v-chip-on-bg: #22d3ee;
+    --v-chip-on-fg: #001016;
+    --v-input-bg: #0b0b0d;
+    --v-input-border: rgba(255,255,255,0.05);
+    --v-accent: #22d3ee;
+    --v-accent-fg: #001016;
+    --v-check: #303035;
+  }
+  .v-oled .row { box-shadow: 0 0 0 1px rgba(34,211,238,0.0); }
+  .v-oled .row.done { box-shadow: 0 0 0 1px rgba(34,211,238,0.18); }
+  .v-oled .pri.high { background: rgba(244,63,94,0.16); color: #fb7185; }
+
+  /* ============================================================ */
+  /* VARIANT 3 — Glassy / blurred                                  */
+  /* ============================================================ */
+  .v-glass .phone .screen,
+  .v-glass .desktop .screen {
+    background:
+      radial-gradient(120% 80% at 10% 0%, rgba(120,75,255,0.35), transparent 55%),
+      radial-gradient(100% 80% at 100% 100%, rgba(20,200,255,0.18), transparent 60%),
+      #0b0d14;
+    --v-text: #ecedf5;
+    --v-muted: #9a9bb0;
+    --v-hairline: rgba(255,255,255,0.08);
+    --v-row-bg: rgba(255,255,255,0.05);
+    --v-row-border: rgba(255,255,255,0.08);
+    --v-chip-border: rgba(255,255,255,0.12);
+    --v-chip-bg: rgba(255,255,255,0.05);
+    --v-chip-on-bg: rgba(255,255,255,0.95);
+    --v-chip-on-fg: #0b0d14;
+    --v-input-bg: rgba(255,255,255,0.06);
+    --v-input-border: rgba(255,255,255,0.1);
+    --v-accent: #c4b5fd;
+    --v-accent-fg: #1d1140;
+    --v-check: rgba(255,255,255,0.25);
+  }
+  .v-glass .row { backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1); }
+  .v-glass .quickadd { backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .v-glass .nav { backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); background: rgba(11,13,20,0.5); }
+
+  /* ============================================================ */
+  /* VARIANT 4 — Neo-noir w/ vibrant green accent                  */
+  /* ============================================================ */
+  .v-noir .phone .screen,
+  .v-noir .desktop .screen {
+    background: #14141a;
+    --v-text: #f1f1f3;
+    --v-muted: #71717a;
+    --v-hairline: rgba(255,255,255,0.06);
+    --v-row-bg: #1c1c24;
+    --v-row-border: transparent;
+    --v-chip-border: rgba(255,255,255,0.07);
+    --v-chip-bg: #1c1c24;
+    --v-chip-on-bg: #22c55e;
+    --v-chip-on-fg: #052e16;
+    --v-input-bg: #1c1c24;
+    --v-input-border: rgba(255,255,255,0.06);
+    --v-accent: #22c55e;
+    --v-accent-fg: #052e16;
+    --v-check: #3a3a44;
+  }
+  .v-noir .top h3,
+  .v-noir .main-header h3,
+  .v-noir .brand { font-family: "Space Mono", "JetBrains Mono", ui-monospace, monospace; font-weight: 700; letter-spacing: 0; }
+  .v-noir .group-label { color: #22c55e; opacity: 0.8; }
+  .v-noir .row { border-left: 2px solid transparent; }
+  .v-noir .row.high-pri { border-left-color: #22c55e; }
+
+  /* CLI density tweaks: collapse meta to inline + add row dividers instead of cards */
+  body.density-cli .dash .row {
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--v-hairline) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    grid-template-columns: 16px 1fr auto auto;
+  }
+  body.density-cli .dash .row .meta { display: none; }
+  body.density-cli .dash .list { padding: 0 14px 96px; }
+
+  /* CLI: monospace title on noir */
+  body.density-cli .v-noir .row .title { font-family: "Space Mono", ui-monospace, monospace; font-size: 12px; }
+
+  /* tiny inline svg icons */
+  .icn { width: 14px; height: 14px; vertical-align: -2px; opacity: 0.85; }
+
+  /* ============================================================ */
+  /* DESKTOP FRAME                                                 */
+  /* ============================================================ */
+  .desktop {
+    width: 100%;
+    max-width: 1080px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 30px 60px -20px rgba(0,0,0,0.6),
+      0 8px 24px -8px rgba(0,0,0,0.5);
+    display: none;
+  }
+  .desktop .chrome {
+    height: 32px; display: flex; align-items: center; gap: 8px;
+    padding: 0 12px;
+    background: rgba(0,0,0,0.45);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .desktop .chrome .tl {
+    width: 11px; height: 11px; border-radius: 999px; background: #3a3a3f;
+  }
+  .desktop .chrome .addr {
+    flex: 1; text-align: center; font-size: 11px; color: rgba(255,255,255,0.45);
+    font-family: ui-monospace, "SF Mono", "Space Mono", monospace;
+  }
+  .desktop .screen {
+    display: grid; grid-template-columns: 220px 1fr;
+    height: 640px;
+    color: var(--v-text, #e8e8ea);
+  }
+  .desktop .sidebar {
+    border-right: 1px solid var(--v-hairline, rgba(255,255,255,0.06));
+    padding: 16px 10px; overflow-y: auto;
+    background: var(--v-side-bg, rgba(0,0,0,0.18));
+  }
+  .desktop .sidebar .brand {
+    font-size: 13px; font-weight: 600; letter-spacing: -0.01em;
+    padding: 4px 10px 14px; color: var(--v-text);
+  }
+  .desktop .sidebar .side-label {
+    font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.16em; color: var(--v-muted, #888);
+    padding: 14px 10px 6px;
+  }
+  .desktop .sidebar .side-nav { display: flex; flex-direction: column; gap: 1px; }
+  .desktop .sidebar .side-nav button {
+    appearance: none; border: 0; background: transparent;
+    color: var(--v-text); font-size: 12.5px; padding: 6px 10px;
+    border-radius: 8px; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 8px;
+    text-align: left;
+  }
+  .desktop .sidebar .side-nav button:hover { background: rgba(255,255,255,0.04); }
+  .desktop .sidebar .side-nav button.on {
+    background: var(--v-accent, #fff); color: var(--v-accent-fg, #000); font-weight: 500;
+  }
+  .desktop .sidebar .side-nav button .count {
+    margin-left: auto; font-size: 10.5px; opacity: 0.65;
+    font-variant-numeric: tabular-nums;
+  }
+  .desktop .sidebar .side-nav button.on .count { opacity: 0.8; }
+  .desktop .sidebar .side-nav .swatch {
+    width: 7px; height: 7px; border-radius: 999px; display: inline-block;
+  }
+
+  .desktop .main {
+    display: grid; grid-template-rows: auto auto 1fr; min-height: 0;
+  }
+  .desktop .main-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px 10px;
+    gap: 14px;
+  }
+  .desktop .main-header h3 {
+    margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.015em;
+  }
+  .desktop .main-header .greeting { font-size: 11.5px; color: var(--v-muted, #888); margin-top: 2px; }
+  .desktop .main-header .tools { display: flex; align-items: center; gap: 10px; }
+  .desktop .main-header .search {
+    background: var(--v-input-bg, rgba(255,255,255,0.04));
+    border: 1px solid var(--v-input-border, rgba(255,255,255,0.06));
+    color: var(--v-text); font-family: inherit; font-size: 12px;
+    padding: 6px 10px; border-radius: 8px; width: 220px; outline: none;
+  }
+  .desktop .main-header .search::placeholder { color: var(--v-muted, #888); }
+  .desktop .main-header .new-btn {
+    background: var(--v-accent, #fff); color: var(--v-accent-fg, #000);
+    border: 0; padding: 6px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    font-family: inherit;
+  }
+  .desktop .main-header .avatar {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: linear-gradient(135deg, #ff8a4c, #d946ef);
+    display: grid; place-items: center; font-size: 11px; font-weight: 600; color: white;
+  }
+  .desktop .filters {
+    padding: 4px 22px 12px;
+    display: flex; gap: 6px; align-items: center;
+  }
+  .desktop .list { padding: 0 14px 22px; overflow-y: auto; }
+  .desktop .row {
+    display: grid;
+    grid-template-columns: 16px 1fr 110px 90px 60px;
+    gap: 12px; align-items: center;
+    padding: var(--row-pad-y, 12px) var(--row-pad-x, 14px);
+    margin-bottom: var(--row-gap, 8px);
+    border-radius: 10px;
+    background: var(--v-row-bg, rgba(255,255,255,0.03));
+    border: 1px solid var(--v-row-border, transparent);
+  }
+  .desktop .row .check {
+    width: 14px; height: 14px; border-radius: 999px;
+    border: 1.5px solid var(--v-check, #4a4a52);
+  }
+  .desktop .row.done .check { background: var(--v-accent); border-color: var(--v-accent); }
+  .desktop .row .title { font-size: var(--type-title, 13.5px); font-weight: 500; }
+  .desktop .row.done .title { text-decoration: line-through; color: var(--v-muted); }
+  .desktop .row .col {
+    font-size: var(--type-meta, 11.5px); color: var(--v-muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .desktop .row .col .dot { width: 6px; height: 6px; border-radius: 999px; }
+  .desktop .row .pri {
+    font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+    justify-self: end; letter-spacing: 0.02em;
+  }
+  .desktop .row .pri.high { background: rgba(244,114,114,0.14); color: #fca5a5; }
+  .desktop .row .pri.med  { background: rgba(250,204,21,0.14);  color: #fde68a; }
+  .desktop .row .pri.low  { background: rgba(148,163,184,0.14); color: #cbd5e1; }
+  .desktop .group-label {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--v-muted); padding: 14px 8px 6px; font-weight: 600;
+  }
+
+  /* CLI density: collapse desktop rows to table-ish */
+  body.density-cli .desktop .row {
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--v-hairline) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* view toggle */
+  body.view-mobile  .phone   { display: block; }
+  body.view-mobile  .desktop { display: none; }
+  body.view-desktop .phone   { display: none; }
+  body.view-desktop .desktop { display: block; }
+  body.view-desktop .lab     { grid-template-columns: 1fr; max-width: 1200px; }
+  body.view-desktop .lab > section { gap: 16px; }
+</style>
+</head>
+<body class="density-tight view-mobile">
+
+<header>
+  <h1>FedOS Home — Dark UI Explorations</h1>
+  <p>
+    Four directions, all darker / sleeker / more compact than today's off-white minimalist UI.
+    Same dashboard content rendered in each so you can compare like-for-like. Use the controls
+    to flip density across all four at once.
+  </p>
+  <div class="controls">
+    <strong style="font-size:11px; color: var(--muted); align-self:center; letter-spacing:0.1em; text-transform:uppercase;">View</strong>
+    <button data-view="mobile" class="active">Mobile</button>
+    <button data-view="desktop">Desktop</button>
+    <span style="width:1px; background:var(--hairline); margin: 0 6px;"></span>
+    <strong style="font-size:11px; color: var(--muted); align-self:center; letter-spacing:0.1em; text-transform:uppercase;">Density</strong>
+    <button data-density="cozy">Cozy</button>
+    <button data-density="tight" class="active">Tight</button>
+    <button data-density="cli">CLI</button>
+  </div>
+</header>
+
+<div class="lab">
+
+  <!-- ============================================================ -->
+  <section class="v-linear">
+    <div class="meta">
+      <h2>1 · Linear / Vercel monochrome</h2>
+      <p>Near-black grays, hairline borders, single white accent. Quiet, "serious tool" feel — closest spiritual cousin to your current minimalism, just inverted.</p>
+      <div class="swatches">
+        <span style="background:#0a0a0a"></span>
+        <span style="background:#171717"></span>
+        <span style="background:#fafafa"></span>
+        <span style="background:#7a7a7d"></span>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="dash">
+          <div class="top">
+            <div>
+              <h3>Today</h3>
+              <div class="greeting">Wed · 6 May · 7 tasks</div>
+            </div>
+            <div class="avatar">F</div>
+          </div>
+          <div class="filters">
+            <span class="chip on">All</span>
+            <span class="chip">Active</span>
+            <span class="chip">Today</span>
+            <span class="chip">Overdue</span>
+            <span class="chip">High</span>
+          </div>
+          <div class="list">
+            <div class="group-label">Overdue</div>
+            <div class="row high-pri">
+              <span class="check"></span>
+              <div>
+                <div class="title">Ship FedOS migration runbook to ops</div>
+                <div class="meta"><span class="dot" style="background:#fb7185"></span>Yesterday · Work</div>
+              </div>
+              <span class="pri high">High</span>
+            </div>
+            <div class="group-label">Today</div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Review Prisma migration 0006</div>
+                <div class="meta"><span class="dot" style="background:#fde68a"></span>2:00 PM · Work</div>
+              </div>
+              <span class="pri med">Med</span>
+            </div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Reply to Marco re: API auth</div>
+                <div class="meta"><span class="dot" style="background:#cbd5e1"></span>Today · Inbox</div>
+              </div>
+              <span class="pri low">Low</span>
+            </div>
+            <div class="row done">
+              <span class="check"></span>
+              <div>
+                <div class="title">Standup notes</div>
+                <div class="meta">9:30 AM · Work</div>
+              </div>
+              <span class="pri low">Low</span>
+            </div>
+            <div class="group-label">Tomorrow</div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Draft Q2 retrospective doc</div>
+                <div class="meta"><span class="dot" style="background:#fde68a"></span>Thu · Work</div>
+              </div>
+              <span class="pri med">Med</span>
+            </div>
+          </div>
+          <div class="quickadd">
+            <input placeholder="Quick add task…" />
+            <div class="add-btn">+</div>
+          </div>
+          <div class="nav">
+            <button class="on"><span class="ico">⌂</span>Home</button>
+            <button><span class="ico">▤</span>List</button>
+            <button><span class="ico">◷</span>Calendar</button>
+            <button><span class="ico">✓</span>Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="v-oled">
+    <div class="meta">
+      <h2>2 · OLED true-black + cyan</h2>
+      <p>Pure #000 with cyan accent. Saves battery on OLED displays, reads "premium phone-native". Punchier than Linear-style; still restrained.</p>
+      <div class="swatches">
+        <span style="background:#000"></span>
+        <span style="background:#0b0b0d"></span>
+        <span style="background:#22d3ee"></span>
+        <span style="background:#fb7185"></span>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="dash">
+          <div class="top">
+            <div>
+              <h3>Today</h3>
+              <div class="greeting" style="color:#22d3ee">Wed · 6 May · 7 tasks</div>
+            </div>
+            <div class="avatar">F</div>
+          </div>
+          <div class="filters">
+            <span class="chip on">All</span>
+            <span class="chip">Active</span>
+            <span class="chip">Today</span>
+            <span class="chip">Overdue</span>
+            <span class="chip">High</span>
+          </div>
+          <div class="list">
+            <div class="group-label">Overdue</div>
+            <div class="row high-pri">
+              <span class="check"></span>
+              <div>
+                <div class="title">Ship FedOS migration runbook to ops</div>
+                <div class="meta"><span class="dot" style="background:#fb7185"></span>Yesterday · Work</div>
+              </div>
+              <span class="pri high">High</span>
+            </div>
+            <div class="group-label">Today</div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Review Prisma migration 0006</div>
+                <div class="meta"><span class="dot" style="background:#fde68a"></span>2:00 PM · Work</div>
+              </div>
+              <span class="pri med">Med</span>
+            </div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Reply to Marco re: API auth</div>
+                <div class="meta"><span class="dot" style="background:#22d3ee"></span>Today · Inbox</div>
+              </div>
+              <span class="pri low">Low</span>
+            </div>
+            <div class="row done">
+              <span class="check"></span>
+              <div>
+                <div class="title">Standup notes</div>
+                <div class="meta">9:30 AM · Work</div>
+              </div>
+              <span class="pri low">Low</span>
+            </div>
+            <div class="group-label">Tomorrow</div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Draft Q2 retrospective doc</div>
+                <div class="meta"><span class="dot" style="background:#fde68a"></span>Thu · Work</div>
+              </div>
+              <span class="pri med">Med</span>
+            </div>
+          </div>
+          <div class="quickadd">
+            <input placeholder="Quick add task…" />
+            <div class="add-btn">+</div>
+          </div>
+          <div class="nav">
+            <button class="on"><span class="ico">⌂</span>Home</button>
+            <button><span class="ico">▤</span>List</button>
+            <button><span class="ico">◷</span>Calendar</button>
+            <button><span class="ico">✓</span>Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="v-glass">
+    <div class="meta">
+      <h2>3 · Glassy / blurred</h2>
+      <p>Translucent panels with violet/cyan ambient glow, soft backdrop blur. Most "designed", most personality — think iOS 17 + a modern productivity app.</p>
+      <div class="swatches">
+        <span style="background:#0b0d14"></span>
+        <span style="background:rgba(255,255,255,0.08)"></span>
+        <span style="background:#c4b5fd"></span>
+        <span style="background:#7c5cff"></span>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="dash">
+          <div class="top">
+            <div>
+              <h3>Today</h3>
+              <div class="greeting">Wed · 6 May · 7 tasks</div>
+            </div>
+            <div class="avatar">F</div>
+          </div>
+          <div class="filters">
+            <span class="chip on">All</span>
+            <span class="chip">Active</span>
+            <span class="chip">Today</span>
+            <span class="chip">Overdue</span>
+            <span class="chip">High</span>
+          </div>
+          <div class="list">
+            <div class="group-label">Overdue</div>
+            <div class="row high-pri">
+              <span class="check"></span>
+              <div>
+                <div class="title">Ship FedOS migration runbook to ops</div>
+                <div class="meta"><span class="dot" style="background:#fb7185"></span>Yesterday · Work</div>
+              </div>
+              <span class="pri high">High</span>
+            </div>
+            <div class="group-label">Today</div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Review Prisma migration 0006</div>
+                <div class="meta"><span class="dot" style="background:#fde68a"></span>2:00 PM · Work</div>
+              </div>
+              <span class="pri med">Med</span>
+            </div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Reply to Marco re: API auth</div>
+                <div class="meta"><span class="dot" style="background:#c4b5fd"></span>Today · Inbox</div>
+              </div>
+              <span class="pri low">Low</span>
+            </div>
+            <div class="row done">
+              <span class="check"></span>
+              <div>
+                <div class="title">Standup notes</div>
+                <div class="meta">9:30 AM · Work</div>
+              </div>
+              <span class="pri low">Low</span>
+            </div>
+            <div class="group-label">Tomorrow</div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Draft Q2 retrospective doc</div>
+                <div class="meta"><span class="dot" style="background:#fde68a"></span>Thu · Work</div>
+              </div>
+              <span class="pri med">Med</span>
+            </div>
+          </div>
+          <div class="quickadd">
+            <input placeholder="Quick add task…" />
+            <div class="add-btn">+</div>
+          </div>
+          <div class="nav">
+            <button class="on"><span class="ico">⌂</span>Home</button>
+            <button><span class="ico">▤</span>List</button>
+            <button><span class="ico">◷</span>Calendar</button>
+            <button><span class="ico">✓</span>Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section class="v-noir">
+    <div class="meta">
+      <h2>4 · Neo-noir + emerald accent</h2>
+      <p>Charcoal cards on warm-black bg, monospace touches, emerald as the only accent. Most opinionated; most "personality". Will date faster than 1 or 2 but feels distinctive today.</p>
+      <div class="swatches">
+        <span style="background:#14141a"></span>
+        <span style="background:#1c1c24"></span>
+        <span style="background:#22c55e"></span>
+        <span style="background:#71717a"></span>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="dash">
+          <div class="top">
+            <div>
+              <h3>TODAY</h3>
+              <div class="greeting">wed.06.may // 7 tasks</div>
+            </div>
+            <div class="avatar">F</div>
+          </div>
+          <div class="filters">
+            <span class="chip on">all</span>
+            <span class="chip">active</span>
+            <span class="chip">today</span>
+            <span class="chip">overdue</span>
+            <span class="chip">high</span>
+          </div>
+          <div class="list">
+            <div class="group-label">// overdue</div>
+            <div class="row high-pri">
+              <span class="check"></span>
+              <div>
+                <div class="title">Ship FedOS migration runbook to ops</div>
+                <div class="meta"><span class="dot" style="background:#22c55e"></span>yesterday · work</div>
+              </div>
+              <span class="pri high">HIGH</span>
+            </div>
+            <div class="group-label">// today</div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Review Prisma migration 0006</div>
+                <div class="meta"><span class="dot" style="background:#fde68a"></span>14:00 · work</div>
+              </div>
+              <span class="pri med">MED</span>
+            </div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Reply to Marco re: API auth</div>
+                <div class="meta"><span class="dot" style="background:#cbd5e1"></span>today · inbox</div>
+              </div>
+              <span class="pri low">LOW</span>
+            </div>
+            <div class="row done">
+              <span class="check"></span>
+              <div>
+                <div class="title">Standup notes</div>
+                <div class="meta">09:30 · work</div>
+              </div>
+              <span class="pri low">LOW</span>
+            </div>
+            <div class="group-label">// tomorrow</div>
+            <div class="row">
+              <span class="check"></span>
+              <div>
+                <div class="title">Draft Q2 retrospective doc</div>
+                <div class="meta"><span class="dot" style="background:#fde68a"></span>thu · work</div>
+              </div>
+              <span class="pri med">MED</span>
+            </div>
+          </div>
+          <div class="quickadd">
+            <input placeholder="quick add…" />
+            <div class="add-btn">+</div>
+          </div>
+          <div class="nav">
+            <button class="on"><span class="ico">⌂</span>home</button>
+            <button><span class="ico">▤</span>list</button>
+            <button><span class="ico">◷</span>cal</button>
+            <button><span class="ico">✓</span>done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // Build desktop frames programmatically for each variant
+  function desktopHTML(opts) {
+    const lc = opts.lower || false;
+    const t = (s) => lc ? s.toLowerCase() : s;
+    const grp = (s) => lc ? '// ' + s.toLowerCase() : s;
+    return `
+    <div class="desktop">
+      <div class="chrome">
+        <span class="tl"></span><span class="tl"></span><span class="tl"></span>
+        <div class="addr">fedos.tasks/today</div>
+      </div>
+      <div class="screen">
+        <aside class="sidebar">
+          <div class="brand">${opts.brand || 'FedOS Home'}</div>
+          <div class="side-nav">
+            <button class="on"><span>⌂</span> ${t('Today')} <span class="count">7</span></button>
+            <button><span>▤</span> ${t('All tasks')} <span class="count">42</span></button>
+            <button><span>◷</span> ${t('Calendar')}</button>
+            <button><span>★</span> ${t('Starred')} <span class="count">3</span></button>
+            <button><span>✓</span> ${t('Done')} <span class="count">128</span></button>
+          </div>
+          <div class="side-label">${t('Categories')}</div>
+          <div class="side-nav">
+            <button><span class="swatch" style="background:#fb7185"></span> ${t('Work')} <span class="count">18</span></button>
+            <button><span class="swatch" style="background:#fde68a"></span> ${t('Personal')} <span class="count">9</span></button>
+            <button><span class="swatch" style="background:#cbd5e1"></span> ${t('Inbox')} <span class="count">15</span></button>
+          </div>
+          <div class="side-label">${t('Projects')}</div>
+          <div class="side-nav">
+            <button>${t('FedOS migration')}</button>
+            <button>${t('Q2 planning')}</button>
+            <button>${t('Prisma upgrade')}</button>
+          </div>
+        </aside>
+        <section class="main">
+          <header class="main-header">
+            <div>
+              <h3>${lc ? 'TODAY' : 'Today'}</h3>
+              <div class="greeting">${lc ? 'wed.06.may // 7 tasks' : 'Wed · 6 May · 7 tasks'}</div>
+            </div>
+            <div class="tools">
+              <input class="search" placeholder="${t('Search title, note, owner…')}">
+              <button class="new-btn">+ ${t('New task')}</button>
+              <div class="avatar">F</div>
+            </div>
+          </header>
+          <div class="filters">
+            <span class="chip on">${t('All')}</span>
+            <span class="chip">${t('Active')}</span>
+            <span class="chip">${t('Today')}</span>
+            <span class="chip">${t('Overdue')}</span>
+            <span class="chip">${t('High')}</span>
+          </div>
+          <div class="list">
+            <div class="group-label">${grp('Overdue')}</div>
+            <div class="row high-pri">
+              <span class="check"></span>
+              <div><div class="title">Ship FedOS migration runbook to ops</div></div>
+              <div class="col"><span class="dot" style="background:#fb7185"></span>${t('Work')}</div>
+              <div class="col">${lc ? 'yesterday' : 'Yesterday'}</div>
+              <span class="pri high">${lc ? 'HIGH' : 'High'}</span>
+            </div>
+            <div class="group-label">${grp('Today')}</div>
+            <div class="row">
+              <span class="check"></span>
+              <div><div class="title">Review Prisma migration 0006</div></div>
+              <div class="col"><span class="dot" style="background:#fde68a"></span>${t('Work')}</div>
+              <div class="col">${lc ? '14:00' : '2:00 PM'}</div>
+              <span class="pri med">${lc ? 'MED' : 'Med'}</span>
+            </div>
+            <div class="row">
+              <span class="check"></span>
+              <div><div class="title">Reply to Marco re: API auth</div></div>
+              <div class="col"><span class="dot" style="background:#cbd5e1"></span>${t('Inbox')}</div>
+              <div class="col">${t('Today')}</div>
+              <span class="pri low">${lc ? 'LOW' : 'Low'}</span>
+            </div>
+            <div class="row done">
+              <span class="check"></span>
+              <div><div class="title">Standup notes</div></div>
+              <div class="col"><span class="dot" style="background:#fb7185"></span>${t('Work')}</div>
+              <div class="col">${lc ? '09:30' : '9:30 AM'}</div>
+              <span class="pri low">${lc ? 'LOW' : 'Low'}</span>
+            </div>
+            <div class="group-label">${grp('Tomorrow')}</div>
+            <div class="row">
+              <span class="check"></span>
+              <div><div class="title">Draft Q2 retrospective doc</div></div>
+              <div class="col"><span class="dot" style="background:#fb7185"></span>${t('Work')}</div>
+              <div class="col">${lc ? 'thu' : 'Thu'}</div>
+              <span class="pri med">${lc ? 'MED' : 'Med'}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>`;
+  }
+  const variantOpts = {
+    'v-linear': { brand: 'FedOS Home' },
+    'v-oled':   { brand: 'FedOS Home' },
+    'v-glass':  { brand: 'FedOS Home' },
+    'v-noir':   { brand: 'FEDOS//HOME', lower: true },
+  };
+  document.querySelectorAll('.lab > section').forEach(sec => {
+    const key = Array.from(sec.classList).find(c => c.startsWith('v-'));
+    sec.insertAdjacentHTML('beforeend', desktopHTML(variantOpts[key] || {}));
+  });
+
+  const densityBtns = document.querySelectorAll('.controls button[data-density]');
+  densityBtns.forEach(b => b.addEventListener('click', () => {
+    const d = b.dataset.density;
+    document.body.classList.remove('density-cozy', 'density-tight', 'density-cli');
+    document.body.classList.add('density-' + d);
+    densityBtns.forEach(x => x.classList.toggle('active', x === b));
+  }));
+  const viewBtns = document.querySelectorAll('.controls button[data-view]');
+  viewBtns.forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.view;
+    document.body.classList.remove('view-mobile', 'view-desktop');
+    document.body.classList.add('view-' + v);
+    viewBtns.forEach(x => x.classList.toggle('active', x === b));
+  }));
+</script>
+
+</body>
+</html>

@@ -14,13 +14,13 @@ import {
   type Project,
   type PriorityConfig,
   type StatusConfig,
-} from "./dashboard-types";
-import { useTaskActions } from "./use-task-actions";
+} from "../model/dashboard-types";
+import { useTaskActions } from "../hooks/use-task-actions";
 import { TaskCard, type TaskCardMenu } from "./task-card";
-import { ErrorBoundary } from "./error-boundary";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { TaskEditOverlay } from "./task-edit-overlay";
 import { TaskActionSheet } from "./task-action-sheet";
-import { UndoToast } from "./undo-toast";
+import { UndoToast } from "@/components/undo-toast";
 import { CreateTaskPanel } from "./create-task-panel";
 import { BottomNav } from "./bottom-nav";
 import { NewTaskView } from "./new-task-view";

@@ -5,9 +5,9 @@ import clsx from "clsx";
 import { Check, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { TASK_STATUSES, TASK_PRIORITIES } from "@/lib/constants";
-import type { VisibleTaskRow, Category, TaskStatus, PriorityConfig, StatusConfig } from "./dashboard-types";
-import { useSwipeAction } from "./use-swipe-action";
-import { useLongPress } from "./use-long-press";
+import type { VisibleTaskRow, Category, TaskStatus, PriorityConfig, StatusConfig } from "../model/dashboard-types";
+import { useSwipeAction } from "../hooks/use-swipe-action";
+import { useLongPress } from "../hooks/use-long-press";
 
 export type TaskCardMenu = "status" | "priority" | "category" | "delete";
 
@@ -101,7 +101,7 @@ export function TaskCard({
     longPress.onPointerUp();
   }
 
-  function combinedPointerCancel(_event: React.PointerEvent<HTMLDivElement>) {
+  function combinedPointerCancel() {
     swipe.handlers.onPointerCancel();
     longPress.onPointerCancel();
   }

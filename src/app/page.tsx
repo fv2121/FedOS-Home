@@ -1,4 +1,4 @@
-import { TaskDashboard } from "@/components/task-dashboard";
+import { TaskDashboard } from "@/features/tasks/components/task-dashboard";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { listCategories, listProjects, listPriorityConfigs, listStatusConfigs, searchTasks } from "@/lib/task-service";
 

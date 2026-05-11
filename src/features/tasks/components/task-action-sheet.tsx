@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import clsx from "clsx";
 import { Edit2, Trash2 } from "lucide-react";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/constants";
-import type { PriorityConfig, StatusConfig, VisibleTaskRow } from "./dashboard-types";
+import type { PriorityConfig, StatusConfig, VisibleTaskRow } from "../model/dashboard-types";
 
 type Props = {
   task: VisibleTaskRow;

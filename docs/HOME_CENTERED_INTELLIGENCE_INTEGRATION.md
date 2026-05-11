@@ -58,7 +58,7 @@ Status legend:
 | P0 | Done | DB-01 | Single Home product database | FedOS Home PostgreSQL is the product database; Intelligence SQLite/SQLModel is transitional or lab-only. | [Database Architecture](#database-architecture) |
 | P0 | Done | SETUP-01 | GitHub/Railway rename cleanup | GitHub repo renamed to `FedOS-Home`, local `origin` updated, fetch verified, Railway confirmed. | [GitHub And Repository Hygiene](#github-and-repository-hygiene), [Immediate Tracker](#immediate-tracker) |
 | P0 | Done | SETUP-02 | VS Code workspace and readiness checks | `FedOS.code-workspace` created; Home build, Prisma generate, and migration status passed. | [VS Code Workspace](#vs-code-workspace), [HCI-00](#hci-00-deployment-and-workspace-readiness) |
-| P0 | Deferred | SETUP-03 | Local Home folder rename | Home working tree is clean, but local folder rename from `fedos-tasks` to `fedos-home` is optional. | [Open Questions](#open-questions) |
+| P0 | Done | SETUP-03 | Local Home repo root move | Home repository boundary moved up from nested `fedos-tasks` to `/Users/federico_valori/Documents/FedOS-Home`. | [Immediate Tracker](#immediate-tracker) |
 | P1 | Next | HCI-01 | Home domain model for briefings | Add Home-owned Prisma records for briefing packages, revisions, proposed actions, review decisions, and feedback. | [HCI-01](#hci-01-home-domain-model-for-briefings) |
 | P2 | Planned | HCI-02 | Home server module structure | Create clean internal backend boundaries for briefing, intelligence, memory, sources, LLM, and tasks. | [HCI-02](#hci-02-home-server-module-structure) |
 | P3 | Planned | HCI-03 | Memory Digest consumption in Home | Home consumes approved Memory Digest while FedOS Memory remains separate and canonical. | [HCI-03](#hci-03-memory-digest-consumption-in-home) |
@@ -391,7 +391,7 @@ Principles:
 Create a parent-level workspace once the migration begins, for example `FedOS.code-workspace`.
 
 Suggested workspace folders:
-- `FedOS Home`: `/Users/federico_valori/Documents/FedOS-Home/fedos-tasks`
+- `FedOS Home`: `/Users/federico_valori/Documents/FedOS-Home`
 - `FedOS Intelligence`: `/Users/federico_valori/Documents/FedOS-Intelligence`
 - `FedOS Memory`: the canonical Memory project path
 
@@ -629,7 +629,7 @@ Make sure the renamed Home repo and local workspace are ready before product cod
 
 Work:
 - confirm Railway is connected to `fv2121/FedOS-Home` (done)
-- leave the local Home folder as `fedos-tasks` until current Home changes are committed or parked (committed; rename remains optional)
+- move the local Home repo boundary up to `/Users/federico_valori/Documents/FedOS-Home` so tasks are a capability inside Home rather than the project container (done)
 - create a VS Code workspace for Home, Intelligence, and Memory once the Memory path is confirmed (done: `FedOS.code-workspace`)
 - confirm Home build, Prisma generate, and migration status still work after the repo rename (done)
 
@@ -804,8 +804,6 @@ No duplicate product runtime remains.
 9. Which current Intelligence APIs become unnecessary after migration?
 10. How should outcome feedback be represented in the Home database so future reasoning can use it cleanly?
 11. When should Memory become its own GitHub repo?
-12. Should the local Home folder eventually be renamed from `fedos-tasks` to `fedos-home`, or left as-is?
-
 ## Recommended Next Step
 
 Treat this as an architecture decision first, then move through implementation readiness before changing product code.
@@ -819,7 +817,7 @@ Treat this as an architecture decision first, then move through implementation r
 | Done | Rename Home GitHub repository | Completed: `FedOS-Tasks` -> `FedOS-Home`. |
 | Done | Update local Home `origin` remote | Completed: `https://github.com/fv2121/FedOS-Home.git`; fetch verified. |
 | Done | Check Railway deployment connection | Confirmed Railway points to `fv2121/FedOS-Home` after the GitHub rename. |
-| Deferred | Decide whether to rename local Home folder | Home working tree is clean; local folder rename is optional. Current path remains `/Users/federico_valori/Documents/FedOS-Home/fedos-tasks`. |
+| Done | Move local Home repo boundary up | Home now lives at `/Users/federico_valori/Documents/FedOS-Home`; the nested `fedos-tasks` folder has been removed. |
 | Done | Create VS Code workspace | Created `FedOS.code-workspace` with Home, Intelligence, and Memory folders. |
 | Done | Verify Home readiness checks | `npm run build`, `npm run db:generate`, and `npx prisma migrate status` passed. |
 | Done | Update Architecture and Project Brief | Updated to reflect Home-centered runtime, single Home product database, and Intelligence as migration/reference layer. |
@@ -828,7 +826,6 @@ Treat this as an architecture decision first, then move through implementation r
 
 ### Recommended Order From Here
 
-1. Confirm whether to keep the local Home folder as `fedos-tasks` for now or rename it to `fedos-home`.
-2. Decide when Memory should become its own GitHub repo.
-3. Fold the HCI implementation backlog into the Home backlog once scope is agreed.
-4. Start implementation with HCI-01: Home Domain Model For Briefings.
+1. Decide when Memory should become its own GitHub repo.
+2. Fold the HCI implementation backlog into the Home backlog once scope is agreed.
+3. Start implementation with HCI-01: Home Domain Model For Briefings.

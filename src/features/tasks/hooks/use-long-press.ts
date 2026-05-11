@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 const DEFAULT_DELAY_MS = 400;
 const DEFAULT_MOVE_THRESHOLD_PX = 6;
@@ -16,7 +16,10 @@ export function useLongPress(onLongPress: () => void, options: Options = {}) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
   const onLongPressRef = useRef(onLongPress);
-  onLongPressRef.current = onLongPress;
+
+  useEffect(() => {
+    onLongPressRef.current = onLongPress;
+  }, [onLongPress]);
 
   const cancel = useCallback(() => {
     if (timerRef.current !== null) {

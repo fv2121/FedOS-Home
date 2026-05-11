@@ -3,7 +3,7 @@
 import { useRef, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/lib/constants";
-import type { Category, Project, Tag } from "./dashboard-types";
+import type { Category, Project, Tag } from "../model/dashboard-types";
 
 type Props = {
   categories: Category[];

@@ -10,8 +10,8 @@ import {
   presetDueDate,
   type CreateTaskDuePreset,
   type CreateTaskInput,
-} from "./create-task-model";
-import type { Category, Project } from "./dashboard-types";
+} from "../model/create-task-model";
+import type { Category, Project } from "../model/dashboard-types";
 
 type Props = {
   categories: Category[];

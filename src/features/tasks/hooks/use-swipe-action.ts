@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const REVEAL_RATIO = 0.25;
 const COMMIT_RATIO = 0.60;
@@ -27,8 +27,11 @@ export function useSwipeAction(onCommit: () => void) {
   const directionRef = useRef<"none" | "horizontal" | "vertical">("none");
   const translateXRef = useRef(0);
   const onCommitRef = useRef(onCommit);
-  onCommitRef.current = onCommit;
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    onCommitRef.current = onCommit;
+  }, [onCommit]);
 
   const snapBack = useCallback(() => {
     if (settleTimerRef.current !== null) {
