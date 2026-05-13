@@ -1,19 +1,33 @@
 # FedOS Home-Centered Intelligence Architecture
 
 ## Purpose
-This document describes the target architecture for the FedOS intelligence capability as it moves into FedOS Home.
+This document describes the current and target architecture for the FedOS intelligence capability inside FedOS Home.
 
-The target product architecture is Home-centered: FedOS Home owns the product runtime, product database, user experience, briefing packages, proposed actions, approved tasks, and feedback loop. The current FedOS Intelligence project remains useful as a reference/lab while its runtime capabilities migrate into the Home backend.
+The product architecture is Home-centered: FedOS Home owns the product runtime, product database, user experience, briefing packages, proposed actions, approved tasks, and feedback loop. The current FedOS Intelligence project remains useful as a reference/lab, but the MVP runtime path now belongs in the Home backend.
 
 ## System Boundaries
 FedOS has three cooperating projects:
 - **FedOS Memory**: canonical context and operating memory
 - **FedOS Home**: user-facing command center, product runtime, Home PostgreSQL database, and canonical approved-task store
-- **FedOS Intelligence**: current reference/lab implementation for ingestion, reasoning, prioritization, recommendations, and proposed actions while the useful runtime pieces migrate into Home
+- **FedOS Intelligence**: reference/lab implementation for ingestion, reasoning, prioritization, recommendations, and proposed actions after the useful MVP runtime pieces have moved into Home
 
 FedOS Memory stays separate. FedOS Home becomes the long-term runtime owner for briefing generation, briefing package storage, proposed-action review, task creation, chat/voice interaction, and outcomes.
 
 FedOS Intelligence should not remain a separate product runtime long term. It should not become the durable task system or a parallel product database.
+
+## Current Home Implementation
+The Home runtime currently includes:
+- `src/server/tasks` for canonical task-domain logic
+- `src/server/memory` for read-only Memory Digest loading and provenance
+- `src/server/sources/llm-first-signals.ts` for signal hygiene, deduplication, compaction, and prompt formatting
+- `src/server/sources/outlook` for Home-owned Outlook mail/calendar ingestion
+- `src/server/llm` for provider calls
+- `src/server/intelligence` for prompt assembly and briefing orchestration
+- `src/server/briefings` for briefing package persistence and retrieval
+- `src/server/proposals` for proposed-action decisions and task creation handoff
+- `src/server/debug` plus `/debug` and `/api/debug/intelligence/*` for protected pipeline diagnostics
+
+The next major architecture layer is the chat feedback and briefing revision loop.
 
 ## Architectural Principles
 - Home-centered product runtime with strict internal module boundaries
@@ -36,7 +50,7 @@ FedOS Memory
 -> Home-owned BriefingPackage + ProposedActions
 -> Home mobile-first and desktop-continuous review
 -> Approved Home tasks
--> Feedback + task outcomes
+-> Proposal decisions + future feedback and task outcomes
 -> Future reasoning and Memory-update suggestions
 ```
 
@@ -68,7 +82,7 @@ Principle:
 source data should generally be fetched when needed rather than stored wholesale.
 
 ### 2. Normalization
-Source-specific payloads are converted into a shared internal `Item` structure.
+Source-specific payloads are converted into a shared internal `BriefingSignal` structure. Earlier planning docs used `Item` as the conceptual model name; `BriefingSignal` is the current Home implementation name.
 
 Outputs:
 - normalized items
@@ -163,9 +177,9 @@ Responsibilities:
 - merge and structure outputs
 - manage source/context failures
 - assemble final briefing payloads
-- schedule recurring runs
+- schedule recurring runs when unattended briefings are added
 
-The current Python Intelligence orchestration can remain the reference implementation during migration. The long-term runtime orchestration should live inside the Home backend.
+The former Python Intelligence orchestration can remain reference/lab material. The MVP runtime orchestration lives inside the Home backend.
 
 ### 8. Delivery And Interaction
 Delivery layers adapt outputs to user-facing channels.
@@ -178,7 +192,7 @@ Future channels:
 - voice
 - Teams/chat bot
 
-Debug/lab channels may remain in FedOS Intelligence while the migration is underway.
+FedOS Intelligence may keep lab-only debug channels, but the MVP product diagnostic path is the Home Debug Console.
 
 Responsibilities:
 - present priorities, rationale, recommendations, and proposed actions
@@ -216,8 +230,8 @@ For the MVP, these roles should remain simple internal module/service boundaries
 
 ## Core Models
 
-### Item
-Core normalized representation of an incoming signal.
+### BriefingSignal
+Core normalized representation of an incoming signal. This is currently an internal runtime structure, not a durable database table.
 
 Typical fields:
 - `id`
@@ -248,39 +262,45 @@ Typical fields:
 ### BriefingPackage
 Home-owned user-visible briefing package generated by the intelligence module.
 
-Typical fields:
+Current durable fields:
 - `id`
-- `brief_run_id`
-- `created_at`
-- `context_mode`
 - `status`
-- `headline`
-- `summary`
-- `priorities`
-- `recommendations`
-- `risks`
-- `opportunities`
+- `context_mode`
+- `payload`
 - `source_refs`
 - `memory_digest_hash`
+- `memory_digest_stale`
+- `memory_digest_approved_at`
 - `model`
 - `prompt_version`
+- `created_at`
+- `updated_at`
 
 ### ProposedAction
 Suggested next step generated by the intelligence module for FedOS Home review.
 
-Typical fields:
+Current durable fields:
 - `id`
+- `briefing_package_id`
 - `title`
-- `context`
+- `description`
 - `rationale`
-- `signal_id`
 - `source_refs`
+- `suggested_status`
 - `suggested_priority`
-- `suggested_deadline`
+- `suggested_due_at`
 - `suggested_owner`
-- `suggested_category`
+- `suggested_category_id`
+- `suggested_project_id`
+- `suggested_source_type`
+- `suggested_source_ref`
+- `suggested_tags`
 - `uncertainty`
-- `metadata`
+- `status`
+- `decision_reason`
+- `decided_at`
+- `created_at`
+- `updated_at`
 
 ### Recommendation
 Suggested action, resource, topic, person, or next step.
@@ -298,7 +318,7 @@ Typical fields:
 - `status`
 
 ### FeedbackEvent
-Explicit or implicit user feedback.
+Future explicit or implicit user feedback.
 
 Typical fields:
 - `id`
@@ -349,13 +369,13 @@ Selective LLM use:
 
 ## Storage Principles
 Store:
-- Home-owned briefing packages and revisions
-- Home-owned proposed actions and review decisions
+- Home-owned briefing packages
+- Home-owned proposed actions and decision state
 - derived insight
 - source references
 - lightweight metadata
-- objectives and context records
-- feedback events
+- future objectives and context records when needed
+- future briefing revisions and feedback events when needed
 - proposed-action and approved-task linkages
 
 Avoid storing by default:
@@ -365,9 +385,12 @@ Avoid storing by default:
 - unnecessary copies of source-system records
 
 ## Open Architecture Questions
-- What is the minimal Home domain model for briefing packages, revisions, proposed actions, and review decisions?
-- Which Home task events should feed future reasoning first?
+- What is the minimal useful model for chat feedback and preserved briefing revisions?
+- Which Home task events and proposal decisions should feed future reasoning first?
 - Which Memory files should be loaded for each context mode?
 - Which reasoning outputs should be persisted versus generated on demand?
 - How should proposed Memory updates be reviewed and applied?
-- Which current Intelligence debug surfaces should remain lab-only after Home owns the runtime?
+- Where should approved Memory Digest artifacts live after Home owns the runtime?
+- What production secret store should replace the local Microsoft 365 token-file path?
+- How should Home schedule unattended morning briefing runs?
+- Which current Intelligence debug surfaces should remain lab-only now that Home owns the MVP Debug Console?

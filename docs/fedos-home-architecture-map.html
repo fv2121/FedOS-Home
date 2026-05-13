@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FedOS Home-Centered Intelligence Architecture Map</title>
+<style>
+  :root {
+    --page: #f4f6f8;
+    --ink: #18212b;
+    --muted: #617080;
+    --faint: #8793a0;
+    --line: #d7dee7;
+    --line-strong: #b8c4d0;
+    --panel: #ffffff;
+    --memory: #18715f;
+    --memory-soft: #e1f4ed;
+    --home: #315f9f;
+    --home-soft: #e3efff;
+    --signal: #6e569a;
+    --signal-soft: #eee8fb;
+    --action: #9a3c4a;
+    --action-soft: #fde8ec;
+    --ok: #1f7a55;
+    --warn: #a46012;
+    --shadow: 0 18px 60px rgba(29, 42, 55, 0.14);
+    --radius: 8px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.48;
+  }
+
+  .page {
+    min-height: 100vh;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 14px clamp(18px, 4vw, 52px);
+    background: rgba(255, 255, 255, 0.94);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(16px);
+  }
+
+  .brand {
+    display: grid;
+    gap: 2px;
+  }
+
+  .brand strong {
+    font-size: 15px;
+    letter-spacing: 0;
+  }
+
+  .brand span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 7px;
+  }
+
+  .nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #ffffff;
+  }
+
+  .hero {
+    padding: 44px clamp(18px, 4vw, 52px) 28px;
+    background:
+      linear-gradient(120deg, rgba(24, 113, 95, 0.12), transparent 34%),
+      linear-gradient(120deg, rgba(49, 95, 159, 0.13), transparent 62%),
+      #ffffff;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hero-grid {
+    max-width: 1420px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(320px, 0.8fr) minmax(620px, 1.2fr);
+    gap: 34px;
+    align-items: stretch;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--home);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--home);
+  }
+
+  h1 {
+    margin: 14px 0 14px;
+    max-width: 760px;
+    font-size: clamp(34px, 4.6vw, 66px);
+    line-height: 0.98;
+    letter-spacing: 0;
+  }
+
+  .hero p {
+    margin: 0;
+    max-width: 670px;
+    color: var(--muted);
+    font-size: 18px;
+  }
+
+  .hero-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .fact {
+    padding: 13px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.75);
+  }
+
+  .fact b {
+    display: block;
+    font-size: 19px;
+  }
+
+  .fact span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .system-map {
+    min-height: 420px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fbfcfe;
+    box-shadow: var(--shadow);
+  }
+
+  .map-svg {
+    width: 100%;
+    height: 100%;
+    min-height: 388px;
+    display: block;
+  }
+
+  section {
+    padding: 38px clamp(18px, 4vw, 52px);
+  }
+
+  section:nth-of-type(even) {
+    background: #ffffff;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .section-inner {
+    max-width: 1420px;
+    margin: 0 auto;
+  }
+
+  .section-head {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.42fr) minmax(320px, 0.58fr);
+    gap: 28px;
+    align-items: end;
+    margin-bottom: 22px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: clamp(25px, 2.8vw, 40px);
+    line-height: 1.04;
+    letter-spacing: 0;
+  }
+
+  .section-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  .component-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .component {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 14px;
+    min-height: 430px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel);
+    box-shadow: 0 10px 34px rgba(31, 44, 58, 0.08);
+  }
+
+  .component.memory { border-top: 5px solid var(--memory); }
+  .component.home { border-top: 5px solid var(--home); }
+
+  .component-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .component-title h3 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .status-pill,
+  .mini-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .memory .status-pill { color: var(--memory); background: var(--memory-soft); }
+  .home .status-pill { color: var(--home); background: var(--home-soft); }
+
+  .component p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .ownership-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ownership-list li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 9px;
+    align-items: start;
+    color: var(--ink);
+  }
+
+  .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 900;
+    color: #ffffff;
+  }
+
+  .memory .dot { background: var(--memory); }
+  .home .dot { background: var(--home); }
+
+  .swimlane {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel);
+  }
+
+  .lane-grid {
+    display: grid;
+    grid-template-columns: 180px repeat(7, minmax(118px, 1fr));
+    gap: 8px;
+    align-items: stretch;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .lane-label,
+  .lane-cell {
+    min-height: 86px;
+    padding: 11px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+  }
+
+  .lane-label {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #f8fafc;
+    font-weight: 850;
+  }
+
+  .lane-label span {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .lane-cell {
+    background: #ffffff;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .lane-cell b {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ink);
+    font-size: 13px;
+  }
+
+  .lane-cell.memory-step { background: var(--memory-soft); border-color: rgba(24, 113, 95, 0.28); }
+  .lane-cell.home-step { background: var(--home-soft); border-color: rgba(49, 95, 159, 0.28); }
+  .lane-cell.signal-step { background: var(--signal-soft); border-color: rgba(110, 86, 154, 0.28); }
+  .lane-cell.action-step { background: var(--action-soft); border-color: rgba(154, 60, 74, 0.28); }
+  .lane-cell.future-step { background: #f7f1e9; border-color: rgba(134, 86, 45, 0.28); }
+
+  .logic-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.9fr) minmax(420px, 1.1fr);
+    gap: 18px;
+    align-items: stretch;
+  }
+
+  .module-stack,
+  .logic-map {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel);
+  }
+
+  .module-stack h3,
+  .logic-map h3,
+  .contracts h3,
+  .decision-board h3 {
+    margin: 0 0 13px;
+    font-size: 20px;
+    letter-spacing: 0;
+  }
+
+  .module-list {
+    display: grid;
+    gap: 9px;
+  }
+
+  .module-row {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fbfcfe;
+  }
+
+  .module-row code {
+    color: var(--home);
+    font-weight: 800;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .module-row span {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .logic-flow {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .logic-node {
+    position: relative;
+    min-height: 112px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fbfcfe;
+  }
+
+  .logic-node::after {
+    content: "\2192";
+    position: absolute;
+    top: 50%;
+    right: -12px;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    background: #ffffff;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 900;
+    z-index: 1;
+  }
+
+  .logic-node:nth-child(4n)::after,
+  .logic-node:last-child::after {
+    display: none;
+  }
+
+  .logic-node b {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+
+  .logic-node p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .contracts {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel);
+  }
+
+  .contract-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .contract {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    min-height: 245px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fbfcfe;
+  }
+
+  .contract h4 {
+    margin: 0;
+    font-size: 17px;
+  }
+
+  .contract p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .fields span {
+    padding: 5px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #ffffff;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 750;
+  }
+
+  .interaction-band {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.85fr) minmax(460px, 1.15fr);
+    gap: 18px;
+  }
+
+  .user-loop,
+  .decision-board {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel);
+  }
+
+  .loop-svg {
+    width: 100%;
+    min-height: 315px;
+    display: block;
+  }
+
+  .decision-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .decision {
+    min-height: 124px;
+    padding: 13px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #fbfcfe;
+  }
+
+  .decision b {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .decision span {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1120px) {
+    .topbar {
+      position: static;
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .nav {
+      justify-content: flex-start;
+    }
+
+    .hero-grid,
+    .section-head,
+    .logic-grid,
+    .interaction-band {
+      grid-template-columns: 1fr;
+    }
+
+    .component-grid,
+    .contract-grid,
+    .decision-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .logic-flow {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .logic-node:nth-child(2n)::after {
+      display: none;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .hero {
+      padding-top: 28px;
+    }
+
+    .hero-facts,
+    .component-grid,
+    .contract-grid,
+    .decision-grid,
+    .logic-flow {
+      grid-template-columns: 1fr;
+    }
+
+    .module-row {
+      grid-template-columns: 1fr;
+    }
+
+    .logic-node::after {
+      display: none;
+    }
+
+    h1 {
+      font-size: 36px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <strong>FedOS Home Architecture Map</strong>
+      <span>Standalone concept mockup, not connected to the app runtime</span>
+    </div>
+    <nav class="nav" aria-label="Page sections">
+      <a href="#components">Components</a>
+      <a href="#flow">Flow</a>
+      <a href="#logic">Logic</a>
+      <a href="#contracts">Contracts</a>
+      <a href="#loop">User Loop</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">Home-centered intelligence</div>
+          <h1>FedOS Home is the integrated intelligence runtime.</h1>
+          <p>
+            FedOS Home turns fresh signals and durable Memory into a reviewable daily briefing.
+            Home now owns ingestion, reasoning, persistence, review, and approved tasks.
+            Memory remains separate as the canonical context source.
+          </p>
+          <div class="hero-facts">
+            <div class="fact">
+              <b>Home</b>
+              <span>Product plus intelligence runtime</span>
+            </div>
+            <div class="fact">
+              <b>Memory</b>
+              <span>Context owner</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="system-map" aria-label="High level FedOS system map">
+          <svg class="map-svg" viewBox="0 0 920 480" role="img" aria-labelledby="mapTitle mapDesc">
+            <title id="mapTitle">FedOS Home integrated runtime map</title>
+            <desc id="mapDesc">FedOS Memory and source systems feed FedOS Home. Home contains the intelligence engine, product database, review interface, and task system.</desc>
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#627282"></path>
+              </marker>
+              <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#1d2a37" flood-opacity="0.12"></feDropShadow>
+              </filter>
+            </defs>
+
+            <rect x="22" y="24" width="876" height="432" rx="8" fill="#ffffff" stroke="#d7dee7"></rect>
+
+            <g filter="url(#softShadow)">
+              <rect x="58" y="78" width="228" height="138" rx="8" fill="#e1f4ed" stroke="#18715f"></rect>
+              <text x="82" y="113" fill="#18715f" font-size="14" font-weight="800">FEDOS MEMORY</text>
+              <text x="82" y="144" fill="#18212b" font-size="23" font-weight="850">Canonical context</text>
+              <text x="82" y="176" fill="#617080" font-size="14">Approved digest, priorities,</text>
+              <text x="82" y="198" fill="#617080" font-size="14">stakeholders, preferences.</text>
+            </g>
+
+            <g filter="url(#softShadow)">
+              <rect x="58" y="288" width="228" height="94" rx="8" fill="#eee8fb" stroke="#6e569a"></rect>
+              <text x="82" y="322" fill="#6e569a" font-size="14" font-weight="800">SOURCE SYSTEMS</text>
+              <text x="82" y="353" fill="#18212b" font-size="21" font-weight="850">Fresh signals</text>
+              <text x="82" y="375" fill="#617080" font-size="14">Outlook mail and calendar.</text>
+            </g>
+
+            <g filter="url(#softShadow)">
+              <rect x="338" y="54" width="520" height="360" rx="8" fill="#e3efff" stroke="#315f9f"></rect>
+              <text x="366" y="91" fill="#315f9f" font-size="14" font-weight="800">FEDOS HOME</text>
+              <text x="366" y="119" fill="#18212b" font-size="25" font-weight="850">Integrated product runtime</text>
+              <text x="366" y="143" fill="#617080" font-size="14" font-weight="750">Intelligence is an internal Home capability.</text>
+
+              <rect x="366" y="154" width="138" height="68" rx="8" fill="#ffffff" stroke="#b8c4d0"></rect>
+              <text x="386" y="181" fill="#315f9f" font-size="13" font-weight="850">Memory context</text>
+              <text x="386" y="202" fill="#617080" font-size="12">Digest, freshness,</text>
+              <text x="386" y="218" fill="#617080" font-size="12">provenance.</text>
+
+              <rect x="366" y="260" width="138" height="68" rx="8" fill="#ffffff" stroke="#b8c4d0"></rect>
+              <text x="386" y="287" fill="#315f9f" font-size="13" font-weight="850">Source ingestion</text>
+              <text x="386" y="308" fill="#617080" font-size="12">Outlook fetch,</text>
+              <text x="386" y="324" fill="#617080" font-size="12">normalize, redact.</text>
+
+              <rect x="540" y="182" width="150" height="118" rx="8" fill="#ffffff" stroke="#315f9f"></rect>
+              <text x="563" y="211" fill="#315f9f" font-size="13" font-weight="850">Intelligence layer</text>
+              <text x="563" y="234" fill="#617080" font-size="12">Hygiene, dedup,</text>
+              <text x="563" y="250" fill="#617080" font-size="12">prompt assembly,</text>
+              <text x="563" y="266" fill="#617080" font-size="12">LLM reasoning,</text>
+              <text x="563" y="282" fill="#617080" font-size="12">schema validation.</text>
+
+              <rect x="724" y="136" width="104" height="70" rx="8" fill="#ffffff" stroke="#b8c4d0"></rect>
+              <text x="745" y="164" fill="#315f9f" font-size="13" font-weight="850">Postgres</text>
+              <text x="744" y="184" fill="#617080" font-size="12">Briefings and</text>
+              <text x="744" y="200" fill="#617080" font-size="12">proposals.</text>
+
+              <rect x="724" y="238" width="104" height="70" rx="8" fill="#ffffff" stroke="#b8c4d0"></rect>
+              <text x="746" y="266" fill="#315f9f" font-size="13" font-weight="850">Home UI</text>
+              <text x="744" y="286" fill="#617080" font-size="12">Review and</text>
+              <text x="744" y="302" fill="#617080" font-size="12">decisions.</text>
+
+              <rect x="528" y="340" width="184" height="44" rx="8" fill="#fde8ec" stroke="#9a3c4a"></rect>
+              <text x="552" y="360" fill="#9a3c4a" font-size="13" font-weight="850">Approved proposals</text>
+              <text x="552" y="377" fill="#9a3c4a" font-size="13" font-weight="850">become tasks</text>
+            </g>
+
+            <g>
+              <path d="M 286 147 H 364" fill="none" stroke="#627282" stroke-width="2.5" marker-end="url(#arrow)"></path>
+              <text x="292" y="134" fill="#617080" font-size="13" font-weight="750">approved context</text>
+
+              <path d="M 286 335 H 364" fill="none" stroke="#627282" stroke-width="2.5" marker-end="url(#arrow)"></path>
+              <text x="292" y="322" fill="#617080" font-size="13" font-weight="750">fresh signals</text>
+
+              <path d="M 504 188 H 538" fill="none" stroke="#627282" stroke-width="2.2" marker-end="url(#arrow)"></path>
+              <path d="M 504 294 H 522 V 252 H 538" fill="none" stroke="#627282" stroke-width="2.2" marker-end="url(#arrow)"></path>
+              <path d="M 690 224 H 722" fill="none" stroke="#627282" stroke-width="2.2" marker-end="url(#arrow)"></path>
+              <path d="M 690 258 H 704 V 273 H 722" fill="none" stroke="#627282" stroke-width="2.2" marker-end="url(#arrow)"></path>
+              <path d="M 776 308 V 362 H 714" fill="none" stroke="#627282" stroke-width="2.2" marker-end="url(#arrow)"></path>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <section id="components">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>The operating model</h2>
+          <p>
+            FedOS Home now contains the intelligence capability. Memory remains separate
+            because it is the canonical context source, not because it is a second runtime.
+          </p>
+        </div>
+
+        <div class="component-grid">
+          <article class="component memory">
+            <div class="component-title">
+              <h3>FedOS Memory</h3>
+              <span class="status-pill">Canonical</span>
+            </div>
+            <p>
+              The stable operating memory: personal context, priorities, preferences,
+              stakeholders, principles, and approved digest material.
+            </p>
+            <ul class="ownership-list">
+              <li><span class="dot">1</span><span>Owns source Memory files and long-lived context.</span></li>
+              <li><span class="dot">2</span><span>Produces or stores an approved digest used as prompt context.</span></li>
+              <li><span class="dot">3</span><span>Receives only reviewable update suggestions, never silent writes.</span></li>
+              <li><span class="dot">4</span><span>Stays separate from Home so the source of truth remains inspectable.</span></li>
+            </ul>
+          </article>
+
+          <article class="component home">
+            <div class="component-title">
+              <h3>FedOS Home</h3>
+              <span class="status-pill">Integrated runtime</span>
+            </div>
+            <p>
+              The user-facing command center and intelligence runtime. Home ingests signals,
+              reasons over context, stores briefings, and turns approved proposals into tasks.
+            </p>
+            <ul class="ownership-list">
+              <li><span class="dot">1</span><span>Fetches Outlook signals and normalizes them into `BriefingSignal` records.</span></li>
+              <li><span class="dot">2</span><span>Runs the intelligence layer: hygiene, compaction, prompt assembly, LLM reasoning, and validation.</span></li>
+              <li><span class="dot">3</span><span>Persists `BriefingPackage` and `ProposedAction` records in PostgreSQL.</span></li>
+              <li><span class="dot">4</span><span>Owns approve, reject, defer, task creation, Home UI, APIs, and the Debug Console.</span></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="flow">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>End-to-end operating flow</h2>
+          <p>
+            The product loop starts with fresh signals and Memory context, then ends in
+            reviewable decisions inside Home. Proposed actions are not tasks until approved.
+          </p>
+        </div>
+
+        <div class="swimlane">
+          <div class="lane-grid" aria-label="FedOS end-to-end flow swimlane">
+            <div class="lane-label">Stage<span>Owner and purpose</span></div>
+            <div class="lane-cell signal-step"><b>1. Source fetch</b>Outlook mail and calendar are fetched through Home-owned ingestion.</div>
+            <div class="lane-cell signal-step"><b>2. Normalize</b>Source payloads become `BriefingSignal` objects.</div>
+            <div class="lane-cell memory-step"><b>3. Context</b>Approved Memory Digest is loaded and checked for staleness.</div>
+            <div class="lane-cell home-step"><b>4. Reason</b>LLM prompt combines stable context and dynamic signals.</div>
+            <div class="lane-cell action-step"><b>5. Persist</b>Home stores the briefing and proposed actions.</div>
+            <div class="lane-cell home-step"><b>6. Review</b>Federico approves, rejects, or defers proposals.</div>
+            <div class="lane-cell future-step"><b>7. Learn</b>Decisions and outcomes inform future reasoning.</div>
+
+            <div class="lane-label">Memory<span>Context source</span></div>
+            <div class="lane-cell"></div>
+            <div class="lane-cell"></div>
+            <div class="lane-cell memory-step"><b>Digest</b>Read-only approved context with hash provenance.</div>
+            <div class="lane-cell memory-step"><b>Guardrail</b>Stale or missing digest is visible, not hidden.</div>
+            <div class="lane-cell memory-step"><b>Trace</b>Digest hash and approval timestamp are stamped on package.</div>
+            <div class="lane-cell"></div>
+            <div class="lane-cell memory-step"><b>Suggestions</b>Future Memory updates require review.</div>
+
+            <div class="lane-label">Home<span>Product runtime</span></div>
+            <div class="lane-cell home-step"><b>Outlook module</b>`src/server/sources/outlook`</div>
+            <div class="lane-cell home-step"><b>Signal prep</b>Hygiene, deduplication, compaction.</div>
+            <div class="lane-cell home-step"><b>Prompt prep</b>Stable context plus dynamic signals.</div>
+            <div class="lane-cell home-step"><b>Generation</b>Structured output validated before use.</div>
+            <div class="lane-cell home-step"><b>PostgreSQL</b>`BriefingPackage` and `ProposedAction` rows.</div>
+            <div class="lane-cell home-step"><b>UI and APIs</b>Home, Tasks, proposal decisions.</div>
+            <div class="lane-cell home-step"><b>Next layer</b>Chat, revisions, scheduling, outcome model.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="logic">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>Inside the Home intelligence module</h2>
+          <p>
+            Home is broad as a product, but modular internally. The logic is split by
+            source ingestion, context loading, orchestration, persistence, decisions,
+            and debug inspection.
+          </p>
+        </div>
+
+        <div class="logic-grid">
+          <div class="module-stack">
+            <h3>Home server modules</h3>
+            <div class="module-list">
+              <div class="module-row"><code>tasks</code><span>Canonical durable task service and task creation helpers.</span></div>
+              <div class="module-row"><code>memory</code><span>Read-only Memory context and approved digest loader.</span></div>
+              <div class="module-row"><code>sources</code><span>Outlook ingestion plus LLM-first hygiene and signal preparation.</span></div>
+              <div class="module-row"><code>llm</code><span>Provider wrapper for structured JSON generation.</span></div>
+              <div class="module-row"><code>intelligence</code><span>Prompt assembly and end-to-end briefing orchestration.</span></div>
+              <div class="module-row"><code>briefings</code><span>Briefing package persistence, retrieval, and generation entrypoints.</span></div>
+              <div class="module-row"><code>proposals</code><span>Approve, reject, defer, and create approved Home tasks.</span></div>
+              <div class="module-row"><code>debug</code><span>Preflight, redaction, run summaries, dry-run and persist diagnostics.</span></div>
+            </div>
+          </div>
+
+          <div class="logic-map">
+            <h3>Pipeline logic</h3>
+            <div class="logic-flow">
+              <div class="logic-node">
+                <b>Outlook fetch</b>
+                <p>Recent mail and upcoming calendar signals, with token status and warnings.</p>
+              </div>
+              <div class="logic-node">
+                <b>Normalize</b>
+                <p>Graph payloads become compact `BriefingSignal` records.</p>
+              </div>
+              <div class="logic-node">
+                <b>Hygiene</b>
+                <p>Obvious machine noise removed; duplicate source IDs collapsed.</p>
+              </div>
+              <div class="logic-node">
+                <b>Compact</b>
+                <p>Threads and repeated sources are summarized without losing traceability.</p>
+              </div>
+              <div class="logic-node">
+                <b>Memory</b>
+                <p>Approved digest is inserted as stable, read-only context.</p>
+              </div>
+              <div class="logic-node">
+                <b>LLM</b>
+                <p>Judgment-heavy synthesis returns narrative, priorities, recommendations, proposed actions, uncertainty.</p>
+              </div>
+              <div class="logic-node">
+                <b>Validate</b>
+                <p>Zod-style schema validation keeps malformed output out of the product path.</p>
+              </div>
+              <div class="logic-node">
+                <b>Persist or preview</b>
+                <p>Product runs write records; debug dry-runs inspect the same pipeline without DB writes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contracts">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>Core product contracts</h2>
+          <p>
+            These are the objects that make the system understandable. They keep
+            source signals, generated insight, proposed work, and approved tasks
+            separate from one another.
+          </p>
+        </div>
+
+        <div class="contracts">
+          <h3>Data and decision objects</h3>
+          <div class="contract-grid">
+            <article class="contract">
+              <span class="mini-pill" style="color: var(--signal); background: var(--signal-soft);">Runtime</span>
+              <h4>BriefingSignal</h4>
+              <p>Transient normalized source input used by the reasoning pipeline.</p>
+              <div class="fields">
+                <span>source_type</span><span>source_id</span><span>title</span><span>summary</span><span>timestamp</span><span>participants</span><span>metadata</span>
+              </div>
+            </article>
+
+            <article class="contract">
+              <span class="mini-pill" style="color: var(--home); background: var(--home-soft);">Stored</span>
+              <h4>BriefingPackage</h4>
+              <p>Home-owned user-visible briefing with payload and provenance.</p>
+              <div class="fields">
+                <span>status</span><span>context_mode</span><span>payload</span><span>source_refs</span><span>memory_digest_hash</span><span>model</span><span>prompt_version</span>
+              </div>
+            </article>
+
+            <article class="contract">
+              <span class="mini-pill" style="color: var(--action); background: var(--action-soft);">Reviewable</span>
+              <h4>ProposedAction</h4>
+              <p>A suggestion attached to a briefing. It is not a task yet.</p>
+              <div class="fields">
+                <span>title</span><span>description</span><span>rationale</span><span>status</span><span>decision_reason</span><span>suggested_due_at</span><span>source_refs</span>
+              </div>
+            </article>
+
+            <article class="contract">
+              <span class="mini-pill" style="color: var(--ok); background: #e2f5ec;">Approved</span>
+              <h4>Task</h4>
+              <p>Durable Home work item created only after explicit approval.</p>
+              <div class="fields">
+                <span>title</span><span>status</span><span>priority</span><span>category</span><span>project</span><span>due_at</span><span>approved_from_proposed_action_id</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="loop">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2>The daily user loop</h2>
+          <p>
+            The user experience should stay calm: brief first, decision second,
+            task execution third. The system assists judgment but does not silently act.
+          </p>
+        </div>
+
+        <div class="interaction-band">
+          <div class="user-loop" aria-label="User loop diagram">
+            <svg class="loop-svg" viewBox="0 0 520 360" role="img" aria-labelledby="loopTitle loopDesc">
+              <title id="loopTitle">FedOS daily user loop</title>
+              <desc id="loopDesc">The user reviews a briefing, decides on proposed actions, approved proposals become tasks, outcomes feed future reasoning.</desc>
+              <defs>
+                <marker id="loopArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#627282"></path>
+                </marker>
+              </defs>
+              <rect x="12" y="14" width="496" height="332" rx="8" fill="#fbfcfe" stroke="#d7dee7"></rect>
+              <circle cx="260" cy="180" r="88" fill="#ffffff" stroke="#d7dee7"></circle>
+              <text x="260" y="170" text-anchor="middle" fill="#18212b" font-size="18" font-weight="850">Federico</text>
+              <text x="260" y="197" text-anchor="middle" fill="#617080" font-size="13">review, decide, execute</text>
+
+              <rect x="56" y="42" width="146" height="62" rx="8" fill="#e3efff" stroke="#315f9f"></rect>
+              <text x="129" y="67" text-anchor="middle" fill="#315f9f" font-size="13" font-weight="850">Morning brief</text>
+              <text x="129" y="88" text-anchor="middle" fill="#617080" font-size="12">what matters today</text>
+
+              <rect x="316" y="42" width="146" height="62" rx="8" fill="#fde8ec" stroke="#9a3c4a"></rect>
+              <text x="389" y="67" text-anchor="middle" fill="#9a3c4a" font-size="13" font-weight="850">Proposals</text>
+              <text x="389" y="88" text-anchor="middle" fill="#617080" font-size="12">approve or defer</text>
+
+              <rect x="316" y="256" width="146" height="62" rx="8" fill="#e2f5ec" stroke="#1f7a55"></rect>
+              <text x="389" y="281" text-anchor="middle" fill="#1f7a55" font-size="13" font-weight="850">Tasks</text>
+              <text x="389" y="302" text-anchor="middle" fill="#617080" font-size="12">durable execution</text>
+
+              <rect x="56" y="256" width="146" height="62" rx="8" fill="#f6eadc" stroke="#86562d"></rect>
+              <text x="129" y="281" text-anchor="middle" fill="#86562d" font-size="13" font-weight="850">Outcomes</text>
+              <text x="129" y="302" text-anchor="middle" fill="#617080" font-size="12">future learning</text>
+
+              <path d="M 202 72 C 254 48 314 48 316 72" fill="none" stroke="#627282" stroke-width="2" marker-end="url(#loopArrow)"></path>
+              <path d="M 389 104 C 430 150 430 212 389 256" fill="none" stroke="#627282" stroke-width="2" marker-end="url(#loopArrow)"></path>
+              <path d="M 316 288 C 254 326 202 316 202 288" fill="none" stroke="#627282" stroke-width="2" marker-end="url(#loopArrow)"></path>
+              <path d="M 129 256 C 88 214 88 146 129 104" fill="none" stroke="#627282" stroke-width="2" marker-end="url(#loopArrow)"></path>
+            </svg>
+          </div>
+
+          <div class="decision-board">
+            <h3>Decision semantics</h3>
+            <div class="decision-grid">
+              <div class="decision">
+                <b>Approve</b>
+                <span>Creates one durable Home task and links it back to the originating proposal.</span>
+              </div>
+              <div class="decision">
+                <b>Reject</b>
+                <span>Marks the proposal as not useful without creating task debt.</span>
+              </div>
+              <div class="decision">
+                <b>Defer</b>
+                <span>Keeps the proposal visible as not-right-now rather than throwing it away.</span>
+              </div>
+              <div class="decision">
+                <b>Challenge next</b>
+                <span>Future HCI-09 path: ask why, correct the briefing, and preserve a revision.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>

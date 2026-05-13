@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ok } from "@/lib/http";
 import { eventActorSchema, updateTaskSchema } from "@/lib/validators";
 import { failFromError, requireJson } from "@/lib/route-helpers";
-import { updateTask } from "@/lib/task-service";
+import { updateTask } from "@/server/tasks";
 
 const schema = z.object({
   id: z.string().min(1),

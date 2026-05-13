@@ -44,6 +44,19 @@ enum ProjectStatus {
   archived
 }
 
+enum BriefingPackageStatus {
+  active
+  archived
+  failed
+}
+
+enum ProposedActionStatus {
+  pending
+  approved
+  rejected
+  deferred
+}
+
 model Task {
   id            String       @id @default(cuid())
   title         String
@@ -60,11 +73,14 @@ model Task {
   updated_at    DateTime     @updatedAt
   completed_at  DateTime?
 
+  approved_from_proposed_action_id String? @unique
+
   category Category     @relation(fields: [category_id], references: [id])
   project  Project?     @relation(fields: [project_id], references: [id])
   tags     TaskTag[]
   events   TaskEvent[]
   sources  TaskSource[]
+  approved_from_proposed_action ProposedAction? @relation("ProposedActionApprovedTask", fields: [approved_from_proposed_action_id], references: [id])
 
   @@index([status])
   @@index([priority])
@@ -160,4 +176,57 @@ model TaskSource {
 
   @@index([task_id])
   @@index([source_type])
+}
+
+model BriefingPackage {
+  id                        String                @id @default(cuid())
+  status                    BriefingPackageStatus @default(active)
+  context_mode              String
+  payload                   Json
+  source_refs               Json?
+  memory_digest_hash        String?
+  memory_digest_stale       Boolean?
+  memory_digest_approved_at DateTime?
+  model                     String?
+  prompt_version            String?
+  created_at                DateTime              @default(now())
+  updated_at                DateTime              @updatedAt
+
+  proposed_actions ProposedAction[]
+
+  @@index([status])
+  @@index([context_mode])
+  @@index([created_at])
+}
+
+model ProposedAction {
+  id                    String               @id @default(cuid())
+  briefing_package_id   String
+  title                 String
+  description           String?
+  suggested_status      TaskStatus?
+  suggested_priority    TaskPriority?
+  suggested_category_id String?
+  suggested_project_id  String?
+  suggested_owner       String?
+  suggested_due_at      DateTime?
+  suggested_source_type SourceType?
+  suggested_source_ref  String?
+  suggested_tags        Json?
+  rationale             String?
+  uncertainty           String?
+  source_refs           Json?
+  status                ProposedActionStatus @default(pending)
+  decision_reason       String?
+  decided_at            DateTime?
+  created_at            DateTime             @default(now())
+  updated_at            DateTime             @updatedAt
+
+  briefing_package BriefingPackage @relation(fields: [briefing_package_id], references: [id], onDelete: Cascade)
+  approved_task    Task?           @relation("ProposedActionApprovedTask")
+
+  @@index([briefing_package_id])
+  @@index([status])
+  @@index([suggested_due_at])
+  @@index([created_at])
 }

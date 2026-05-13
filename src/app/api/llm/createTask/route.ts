@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { ok } from "@/lib/http";
 import { createTaskSchema, eventActorSchema } from "@/lib/validators";
-import { createTask } from "@/lib/task-service";
+import { createTask } from "@/server/tasks";
 import { failFromError, requireJson } from "@/lib/route-helpers";
 
 const schema = z.object({ input: createTaskSchema, actor: eventActorSchema });

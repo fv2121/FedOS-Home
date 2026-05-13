@@ -22,7 +22,7 @@ import { TaskEditOverlay } from "./task-edit-overlay";
 import { TaskActionSheet } from "./task-action-sheet";
 import { UndoToast } from "@/components/undo-toast";
 import { CreateTaskPanel } from "./create-task-panel";
-import { BottomNav } from "./bottom-nav";
+import { PrimaryNav } from "@/components/primary-nav";
 import { NewTaskView } from "./new-task-view";
 
 type Props = {
@@ -90,7 +90,7 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
   }, [openTaskMenu]);
 
   const requestedView = searchParams.get("view");
-  const view = isViewOption(requestedView) ? requestedView : "home";
+  const view = isViewOption(requestedView) ? requestedView : "tasks";
   const requestedGroup = searchParams.get("groupBy");
   const listGroup: ListGroup =
     requestedGroup === "priority" || requestedGroup === "category" || requestedGroup === "project" ? requestedGroup : "date";
@@ -246,6 +246,7 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
 
   return (
     <div className="min-h-screen bg-[var(--color-app-bg)] pb-28 md:pb-10">
+      <PrimaryNav activeView={view} updateURL={updateURL} />
       <div className="mx-auto w-full max-w-6xl px-3 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)] md:p-6">
         <main className="space-y-4">
           <section className="md:hidden">
@@ -365,8 +366,6 @@ export function TaskDashboard({ initialTasks, categories, projects, priorityConf
           </section>
         </main>
       </div>
-
-<BottomNav activeView={view} updateURL={updateURL} />
 
       {view === "new" && (
         <NewTaskView

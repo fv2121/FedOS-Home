@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FedOS Home HCI-09 Admin Navigation Shell</title>
+<style>
+  :root {
+    --page-bg: #0d1117;
+    --page-fg: #eef2f7;
+    --page-muted: #8c98a8;
+    --page-line: rgba(255,255,255,0.10);
+
+    --admin-bg: #f5f7fa;
+    --admin-panel: #ffffff;
+    --admin-surface: #eef2f6;
+    --admin-line: #d8dee8;
+    --admin-line-strong: #c2ccd8;
+    --admin-text: #17202a;
+    --admin-muted: #667085;
+    --admin-faint: #98a2b3;
+    --rail: #1f252d;
+    --rail-2: #2c3541;
+    --rail-text: #e4e7ec;
+    --rail-muted: #aab3c0;
+    --green: #16815d;
+    --green-soft: #e5f5ee;
+    --amber: #a15c00;
+    --amber-soft: #fff3d8;
+    --blue: #2868b7;
+    --blue-soft: #e5f0ff;
+    --violet: #6950a1;
+    --violet-soft: #eee9fb;
+    --red: #ba2b1f;
+    --red-soft: #ffe8e4;
+
+    --home-bg: #f8f7f4;
+    --home-panel: rgba(255,255,255,0.92);
+    --home-surface: #ffffff;
+    --home-soft: #f8fafc;
+    --home-line: #d8dee6;
+    --home-text: #0f172a;
+    --home-muted: #64748b;
+    --home-accent: #0f172a;
+
+    font-family: Inter, Manrope, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(52, 96, 125, 0.2), transparent 30rem),
+      radial-gradient(circle at 92% 18%, rgba(95, 72, 130, 0.15), transparent 28rem),
+      var(--page-bg);
+    color: var(--page-fg);
+  }
+
+  body {
+    padding: 28px;
+  }
+
+  .page-header {
+    max-width: 1560px;
+    margin: 0 auto 22px;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--page-line);
+    padding-bottom: 18px;
+  }
+
+  .page-header h1 {
+    margin: 0 0 6px;
+    font-size: 23px;
+    line-height: 1.2;
+    font-weight: 760;
+    letter-spacing: 0;
+  }
+
+  .page-header p {
+    max-width: 860px;
+    margin: 0;
+    color: var(--page-muted);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .page-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-content: flex-start;
+    gap: 8px;
+  }
+
+  .page-badge {
+    border: 1px solid var(--page-line);
+    border-radius: 999px;
+    padding: 6px 10px;
+    color: var(--page-muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .stage {
+    max-width: 1560px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(900px, 1fr) 390px;
+    gap: 26px;
+    align-items: start;
+  }
+
+  .caption {
+    margin: 0 0 10px;
+    color: var(--page-muted);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .caption b {
+    display: block;
+    color: var(--page-fg);
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  .desktop-frame,
+  .phone-frame {
+    overflow: hidden;
+    box-shadow: 0 20px 70px rgba(0,0,0,0.38), 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  .desktop-frame {
+    min-height: 760px;
+    border-radius: 18px;
+    background: var(--admin-bg);
+    color: var(--admin-text);
+  }
+
+  .admin-shell {
+    min-height: 760px;
+    display: grid;
+    grid-template-columns: 238px minmax(0, 1fr);
+  }
+
+  .admin-rail {
+    background: var(--rail);
+    color: var(--rail-text);
+    padding: 18px 14px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 18px;
+  }
+
+  .brand {
+    padding: 4px 6px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .brand-title {
+    font-size: 18px;
+    line-height: 1.15;
+    font-weight: 780;
+  }
+
+  .brand-subtitle {
+    margin-top: 5px;
+    color: var(--rail-muted);
+    font-size: 12px;
+  }
+
+  .nav-section {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+  }
+
+  .nav-group {
+    display: grid;
+    gap: 6px;
+  }
+
+  .nav-label {
+    padding: 0 10px 2px;
+    color: #7e8996;
+    font-size: 10px;
+    font-weight: 780;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .nav-item,
+  .home-link {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--rail-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 680;
+  }
+
+  .nav-item span,
+  .home-link span {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .nav-item:hover,
+  .home-link:hover {
+    background: rgba(255,255,255,0.05);
+    color: #ffffff;
+  }
+
+  .nav-item.active {
+    background: var(--rail-2);
+    color: #ffffff;
+  }
+
+  .glyph {
+    width: 18px;
+    height: 18px;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 5px;
+    display: inline-grid;
+    place-items: center;
+    color: #c8d0db;
+    font-size: 10px;
+    font-weight: 780;
+    flex: 0 0 auto;
+  }
+
+  .count {
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    color: #c8d0db;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 720;
+  }
+
+  .rail-footer {
+    display: grid;
+    gap: 10px;
+  }
+
+  .rail-status {
+    display: grid;
+    gap: 8px;
+    padding: 12px 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .rail-status-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: #b7c0cb;
+    font-size: 12px;
+  }
+
+  .rail-status-row b {
+    color: #ffffff;
+    font-weight: 720;
+  }
+
+  .home-link {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .admin-main {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .admin-topbar {
+    min-height: 78px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--admin-line);
+    background: rgba(255,255,255,0.84);
+    backdrop-filter: blur(12px);
+  }
+
+  .crumbs {
+    margin-bottom: 4px;
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 670;
+  }
+
+  .admin-topbar h2 {
+    margin: 0;
+    color: var(--admin-text);
+    font-size: 22px;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .topbar-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    border: 1px solid var(--admin-line);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--admin-muted);
+    padding: 4px 9px;
+    font-size: 12px;
+    font-weight: 660;
+    white-space: nowrap;
+  }
+
+  .tag.green { color: var(--green); background: var(--green-soft); border-color: #c8e8d9; }
+  .tag.amber { color: var(--amber); background: var(--amber-soft); border-color: #f3d69f; }
+  .tag.blue { color: var(--blue); background: var(--blue-soft); border-color: #c7dcf8; }
+  .tag.violet { color: var(--violet); background: var(--violet-soft); border-color: #d9cefa; }
+  .tag.red { color: var(--red); background: var(--red-soft); border-color: #edb8b2; }
+
+  .admin-workspace {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 16px;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .panel,
+  .control-panel {
+    min-width: 0;
+    border: 1px solid var(--admin-line);
+    border-radius: 10px;
+    background: var(--admin-panel);
+  }
+
+  .control-panel {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    overflow: hidden;
+  }
+
+  .panel-head,
+  .control-head {
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--admin-line);
+  }
+
+  .panel-title,
+  .control-title {
+    margin: 0;
+    color: var(--admin-text);
+    font-size: 12px;
+    font-weight: 780;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .control-scroll {
+    min-height: 0;
+    overflow: auto;
+    padding: 14px;
+    display: grid;
+    align-content: start;
+    gap: 18px;
+  }
+
+  .control-group {
+    display: grid;
+    gap: 9px;
+  }
+
+  .label {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 720;
+  }
+
+  .segmented {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: var(--admin-surface);
+    padding: 2px;
+  }
+
+  .segmented button,
+  .btn {
+    font: inherit;
+  }
+
+  .segmented button {
+    min-height: 30px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 720;
+  }
+
+  .segmented button.active {
+    background: #ffffff;
+    color: var(--blue);
+    box-shadow: 0 1px 2px rgba(16,24,40,0.12);
+  }
+
+  .field {
+    width: 100%;
+    min-height: 34px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    padding: 7px 9px;
+    font-size: 13px;
+  }
+
+  .toggle-row {
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--admin-text);
+    font-size: 13px;
+    font-weight: 680;
+  }
+
+  .helper {
+    display: block;
+    margin-top: 2px;
+    color: var(--admin-muted);
+    font-size: 12px;
+    line-height: 1.35;
+    font-weight: 520;
+  }
+
+  .switch {
+    width: 36px;
+    height: 20px;
+    position: relative;
+    border-radius: 999px;
+    background: #cbd5e1;
+    flex: 0 0 auto;
+  }
+
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(16,24,40,0.25);
+  }
+
+  .switch.on {
+    background: var(--green);
+  }
+
+  .switch.on::after {
+    left: 19px;
+  }
+
+  .control-actions {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border-top: 1px solid var(--admin-line);
+    background: var(--admin-surface);
+  }
+
+  .btn {
+    min-height: 38px;
+    border: 1px solid var(--admin-line-strong);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--admin-text);
+    font-size: 13px;
+    font-weight: 760;
+  }
+
+  .btn.primary {
+    border-color: #12674c;
+    background: var(--green);
+    color: #ffffff;
+  }
+
+  .workspace-content {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 14px;
+    overflow: hidden;
+  }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .metric {
+    min-height: 82px;
+    padding: 12px;
+    border: 1px solid var(--admin-line);
+    border-radius: 10px;
+    background: var(--admin-panel);
+  }
+
+  .metric-label {
+    color: var(--admin-muted);
+    font-size: 11px;
+    font-weight: 760;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .metric-value {
+    margin-top: 8px;
+    color: var(--admin-text);
+    font-size: 27px;
+    line-height: 1;
+    font-weight: 780;
+  }
+
+  .metric-sub {
+    margin-top: 5px;
+    color: var(--admin-faint);
+    font-size: 12px;
+    font-weight: 620;
+  }
+
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    padding: 13px;
+    border: 1px solid var(--admin-line);
+    border-radius: 10px;
+    background: var(--admin-panel);
+  }
+
+  .step {
+    min-height: 62px;
+    padding: 10px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: var(--admin-surface);
+  }
+
+  .step.active {
+    border-color: #98d7be;
+    background: var(--green-soft);
+  }
+
+  .step.warn {
+    border-color: #efca87;
+    background: var(--amber-soft);
+  }
+
+  .step-label {
+    color: var(--admin-muted);
+    font-size: 10px;
+    font-weight: 780;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .step-main {
+    margin-top: 7px;
+    color: var(--admin-text);
+    font-size: 12px;
+    font-weight: 760;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .lower {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 14px;
+    overflow: hidden;
+  }
+
+  .panel {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tab {
+    min-height: 28px;
+    border: 1px solid var(--admin-line);
+    border-radius: 999px;
+    background: var(--admin-surface);
+    color: var(--admin-muted);
+    padding: 5px 9px;
+    font-size: 12px;
+    font-weight: 720;
+  }
+
+  .tab.active {
+    background: var(--blue-soft);
+    color: var(--blue);
+    border-color: #c7dcf8;
+  }
+
+  .table {
+    overflow: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--admin-line);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--admin-muted);
+    background: var(--admin-surface);
+    font-size: 11px;
+    font-weight: 760;
+  }
+
+  td {
+    color: var(--admin-text);
+  }
+
+  .mono {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 11px;
+    color: var(--admin-muted);
+  }
+
+  .log {
+    padding: 12px;
+    display: grid;
+    align-content: start;
+    gap: 9px;
+    overflow: auto;
+  }
+
+  .log-row {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    gap: 10px;
+    color: var(--admin-muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .log-row b {
+    color: var(--admin-text);
+    font-weight: 750;
+  }
+
+  .phone-frame {
+    width: 390px;
+    height: 760px;
+    border-radius: 30px;
+    background: var(--home-bg);
+    color: var(--home-text);
+  }
+
+  .home-shell {
+    min-height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .home-topnav {
+    border-bottom: 1px solid var(--home-line);
+    background: var(--home-panel);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .home-brand {
+    color: var(--home-muted);
+    font-size: 12px;
+    font-weight: 780;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .home-admin {
+    border: 1px solid var(--home-line);
+    border-radius: 999px;
+    background: var(--home-surface);
+    color: var(--home-muted);
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 720;
+  }
+
+  .home-content {
+    padding: 22px 16px 96px;
+    overflow: auto;
+  }
+
+  .home-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .home-header h2 {
+    margin: 0;
+    font-size: 25px;
+    line-height: 1.12;
+    font-weight: 780;
+    letter-spacing: 0;
+  }
+
+  .home-date {
+    margin-top: 6px;
+    color: var(--home-muted);
+    font-size: 13px;
+  }
+
+  .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 999px;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.2), transparent),
+      linear-gradient(135deg, #fb923c, #22c55e 54%, #2563eb);
+    flex: 0 0 auto;
+  }
+
+  .brief-card,
+  .task-card {
+    border: 1px solid var(--home-line);
+    border-radius: 16px;
+    background: var(--home-panel);
+    padding: 15px;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  }
+
+  .brief-card h3,
+  .task-card h3 {
+    margin: 0 0 8px;
+    color: var(--home-text);
+    font-size: 13px;
+    font-weight: 760;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .brief-card p {
+    margin: 0;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .priority-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .priority {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .rank {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--home-soft);
+    color: var(--home-accent);
+    font-size: 12px;
+    font-weight: 780;
+  }
+
+  .priority b {
+    display: block;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .priority span {
+    display: block;
+    margin-top: 2px;
+    color: var(--home-muted);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .task-card {
+    margin-top: 12px;
+  }
+
+  .task-row {
+    display: grid;
+    grid-template-columns: 18px 1fr auto;
+    gap: 10px;
+    align-items: start;
+    padding: 10px 0;
+    border-top: 1px solid var(--home-line);
+  }
+
+  .task-row:first-of-type {
+    border-top: 0;
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #94a3b8;
+    border-radius: 999px;
+    margin-top: 2px;
+  }
+
+  .task-title {
+    font-size: 13px;
+    font-weight: 720;
+  }
+
+  .task-meta {
+    margin-top: 2px;
+    color: var(--home-muted);
+    font-size: 11px;
+  }
+
+  .pill {
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 3px 7px;
+    font-size: 10px;
+    font-weight: 760;
+  }
+
+  .bottom-tabs {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 6px 8px 10px;
+    border-top: 1px solid var(--home-line);
+    background: var(--home-panel);
+  }
+
+  .bottom-tab {
+    min-height: 54px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--home-muted);
+    font-size: 12px;
+    font-weight: 720;
+  }
+
+  .bottom-tab.active {
+    background: var(--home-soft);
+    color: var(--home-accent);
+  }
+
+  .route-strip {
+    max-width: 1560px;
+    margin: 22px auto 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .route-card {
+    border: 1px solid var(--page-line);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    padding: 14px;
+  }
+
+  .route-card h3 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .route-card code {
+    display: block;
+    color: #c8d7e8;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 1320px) {
+    body { padding: 20px; }
+    .stage { grid-template-columns: 1fr; }
+    .phone-frame { width: 100%; max-width: 390px; }
+    .route-strip { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <header class="page-header">
+    <div>
+      <h1>FedOS Home HCI-09 Admin Navigation Shell</h1>
+      <p>Visual proposal for separating the user-facing Home navigation from a dedicated admin area. The admin area gets the left rail; Home keeps its focused product nav.</p>
+    </div>
+    <div class="page-badges" aria-label="Mockup notes">
+      <span class="page-badge">/admin shell</span>
+      <span class="page-badge">left rail only for admin</span>
+      <span class="page-badge">Home nav stays clean</span>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section>
+      <p class="caption">
+        <b>Admin workspace</b>
+        Persistent left navigation for debug, memory, docs, sources, and future background tools.
+      </p>
+      <div class="desktop-frame">
+        <div class="admin-shell">
+          <aside class="admin-rail" aria-label="Admin navigation">
+            <div class="brand">
+              <div class="brand-title">FedOS Admin</div>
+              <div class="brand-subtitle">Intelligence runtime</div>
+            </div>
+
+            <div class="nav-section">
+              <div class="nav-group">
+                <div class="nav-label">Runtime</div>
+                <a class="nav-item" href="#">
+                  <span><i class="glyph">H</i>Overview</span>
+                </a>
+                <a class="nav-item active" href="#">
+                  <span><i class="glyph">D</i>Debug Console</span>
+                  <span class="count">live</span>
+                </a>
+                <a class="nav-item" href="#">
+                  <span><i class="glyph">M</i>Memory Digest</span>
+                  <span class="count">1</span>
+                </a>
+              </div>
+
+              <div class="nav-group">
+                <div class="nav-label">Knowledge</div>
+                <a class="nav-item" href="#">
+                  <span><i class="glyph">R</i>Runbooks</span>
+                </a>
+                <a class="nav-item" href="#">
+                  <span><i class="glyph">A</i>Architecture</span>
+                </a>
+                <a class="nav-item" href="#">
+                  <span><i class="glyph">S</i>Sources</span>
+                </a>
+              </div>
+
+              <div class="nav-group">
+                <div class="nav-label">System</div>
+                <a class="nav-item" href="#">
+                  <span><i class="glyph">J</i>Jobs</span>
+                </a>
+                <a class="nav-item" href="#">
+                  <span><i class="glyph">C</i>Config</span>
+                </a>
+              </div>
+            </div>
+
+            <div class="rail-footer">
+              <div class="rail-status">
+                <div class="rail-status-row"><span>Environment</span><b>local</b></div>
+                <div class="rail-status-row"><span>Memory</span><b>ready</b></div>
+                <div class="rail-status-row"><span>Outlook</span><b>connected</b></div>
+                <div class="rail-status-row"><span>Persist</span><b>off</b></div>
+              </div>
+              <a class="home-link" href="#">
+                <span><i class="glyph">F</i>Back to FedOS</span>
+              </a>
+            </div>
+          </aside>
+
+          <section class="admin-main">
+            <header class="admin-topbar">
+              <div>
+                <div class="crumbs">Admin / Runtime / Debug Console</div>
+                <h2>Debug Console</h2>
+              </div>
+              <div class="topbar-meta">
+                <span class="tag green">Token OK</span>
+                <span class="tag green">Digest fresh</span>
+                <span class="tag blue">Dry run</span>
+                <span class="tag violet">gpt-5.4</span>
+                <span class="tag amber">Prompt 10.7k chars</span>
+              </div>
+            </header>
+
+            <div class="admin-workspace">
+              <aside class="control-panel">
+                <div class="control-head">
+                  <h3 class="control-title">Run controls</h3>
+                  <span class="tag green">Ready</span>
+                </div>
+                <div class="control-scroll">
+                  <section class="control-group">
+                    <span class="label">Model</span>
+                    <div class="segmented" aria-label="Model">
+                      <button>Fast</button>
+                      <button class="active">Balanced</button>
+                      <button>Deep</button>
+                    </div>
+                  </section>
+                  <section class="control-group">
+                    <label>
+                      <span class="label">Max tokens</span>
+                      <input class="field" value="8000" aria-label="Max tokens" />
+                    </label>
+                    <label>
+                      <span class="label">Signal window</span>
+                      <input class="field" value="72 hours" aria-label="Signal window" />
+                    </label>
+                  </section>
+                  <section class="control-group">
+                    <div class="toggle-row">
+                      <span>Use approved digest<span class="helper">Stable Memory context</span></span>
+                      <span class="switch on" aria-hidden="true"></span>
+                    </div>
+                    <div class="toggle-row">
+                      <span>Persist result<span class="helper">Create package rows</span></span>
+                      <span class="switch" aria-hidden="true"></span>
+                    </div>
+                    <div class="toggle-row">
+                      <span>Redact output<span class="helper">Safe UI inspection</span></span>
+                      <span class="switch on" aria-hidden="true"></span>
+                    </div>
+                  </section>
+                </div>
+                <div class="control-actions">
+                  <button class="btn primary">Run preflight</button>
+                  <button class="btn">Run full pipeline</button>
+                </div>
+              </aside>
+
+              <section class="workspace-content">
+                <div class="metric-grid">
+                  <div class="metric">
+                    <div class="metric-label">Signals</div>
+                    <div class="metric-value">184</div>
+                    <div class="metric-sub">47 after hygiene</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-label">Groups</div>
+                    <div class="metric-value">19</div>
+                    <div class="metric-sub">8 collapsed</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-label">Input</div>
+                    <div class="metric-value">7.8k</div>
+                    <div class="metric-sub">tokens estimated</div>
+                  </div>
+                  <div class="metric">
+                    <div class="metric-label">Cost</div>
+                    <div class="metric-value">$0.04</div>
+                    <div class="metric-sub">preflight estimate</div>
+                  </div>
+                </div>
+
+                <div class="pipeline" aria-label="Pipeline progress">
+                  <div class="step active"><div class="step-label">01</div><div class="step-main">Outlook</div></div>
+                  <div class="step active"><div class="step-label">02</div><div class="step-main">Normalize</div></div>
+                  <div class="step active"><div class="step-label">03</div><div class="step-main">Hygiene</div></div>
+                  <div class="step active"><div class="step-label">04</div><div class="step-main">Memory</div></div>
+                  <div class="step warn"><div class="step-label">05</div><div class="step-main">Budget</div></div>
+                  <div class="step"><div class="step-label">06</div><div class="step-main">LLM</div></div>
+                  <div class="step"><div class="step-label">07</div><div class="step-main">Persist off</div></div>
+                </div>
+
+                <div class="lower">
+                  <section class="panel">
+                    <div class="panel-head">
+                      <h3 class="panel-title">Signal sample</h3>
+                      <div class="tabs">
+                        <button class="tab active">Signals</button>
+                        <button class="tab">Prompt</button>
+                        <button class="tab">Memory</button>
+                        <button class="tab">JSON</button>
+                      </div>
+                    </div>
+                    <div class="table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Source</th>
+                            <th>Title</th>
+                            <th>Time</th>
+                            <th>Preview</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td><span class="tag blue">Mail</span></td>
+                            <td>Renewal decision pack</td>
+                            <td class="mono">09:42</td>
+                            <td>Customer risk and pricing context</td>
+                          </tr>
+                          <tr>
+                            <td><span class="tag violet">Calendar</span></td>
+                            <td>Weekly review</td>
+                            <td class="mono">11:00</td>
+                            <td>Prep note linked to Memory</td>
+                          </tr>
+                          <tr>
+                            <td><span class="tag green">Task</span></td>
+                            <td>Follow up with finance</td>
+                            <td class="mono">14:30</td>
+                            <td>Due today, active project</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  <section class="panel">
+                    <div class="panel-head">
+                      <h3 class="panel-title">Run log</h3>
+                      <span class="tag blue">redacted</span>
+                    </div>
+                    <div class="log">
+                      <div class="log-row"><b>15:38</b><span>Loaded approved Memory Digest. stale=false.</span></div>
+                      <div class="log-row"><b>15:38</b><span>Fetched Outlook signals. token=ok.</span></div>
+                      <div class="log-row"><b>15:39</b><span>Collapsed duplicate threads into 19 groups.</span></div>
+                      <div class="log-row"><b>15:39</b><span>Prompt budget warning at 7.8k estimated tokens.</span></div>
+                    </div>
+                  </section>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <p class="caption">
+        <b>User-facing surface</b>
+        Product navigation remains focused on the daily Home and task workflow. Admin is present, but secondary.
+      </p>
+      <div class="phone-frame">
+        <div class="home-shell">
+          <nav class="home-topnav" aria-label="Home navigation">
+            <span class="home-brand">FedOS</span>
+            <button class="home-admin">Admin</button>
+          </nav>
+          <main class="home-content">
+            <header class="home-header">
+              <div>
+                <h2>Good afternoon, Federico</h2>
+                <div class="home-date">Tue 12 May - week 20</div>
+              </div>
+              <div class="avatar" aria-hidden="true"></div>
+            </header>
+
+            <section class="brief-card">
+              <h3>Narrative</h3>
+              <p>Your day is clustered around renewal prep, a late project review, and two follow-ups that should be turned into clean tasks before the afternoon block.</p>
+              <div class="priority-list">
+                <div class="priority">
+                  <span class="rank">1</span>
+                  <div><b>Finalize renewal packet</b><span>Pricing context and customer risk need one pass.</span></div>
+                </div>
+                <div class="priority">
+                  <span class="rank">2</span>
+                  <div><b>Review active backlog</b><span>Three items are ready for status decisions.</span></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="task-card">
+              <h3>Today</h3>
+              <div class="task-row">
+                <span class="dot"></span>
+                <div>
+                  <div class="task-title">Send finance follow-up</div>
+                  <div class="task-meta">Project Ops - due 16:00</div>
+                </div>
+                <span class="pill">High</span>
+              </div>
+              <div class="task-row">
+                <span class="dot"></span>
+                <div>
+                  <div class="task-title">Check proposal actions</div>
+                  <div class="task-meta">Briefing - 3 pending</div>
+                </div>
+                <span class="pill">Now</span>
+              </div>
+              <div class="task-row">
+                <span class="dot"></span>
+                <div>
+                  <div class="task-title">Prepare weekly review</div>
+                  <div class="task-meta">Meeting prep - 30 min</div>
+                </div>
+                <span class="pill">Next</span>
+              </div>
+            </section>
+          </main>
+          <nav class="bottom-tabs" aria-label="Mobile navigation">
+            <div class="bottom-tab active">Home</div>
+            <div class="bottom-tab">Tasks</div>
+            <div class="bottom-tab">New task</div>
+          </nav>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section class="route-strip" aria-label="Route partition">
+    <div class="route-card">
+      <h3>User-facing routes</h3>
+      <code>/</code>
+      <code>/?view=tasks</code>
+      <code>/?view=new</code>
+    </div>
+    <div class="route-card">
+      <h3>Admin routes</h3>
+      <code>/admin/debug</code>
+      <code>/admin/memory-digest</code>
+      <code>/admin/docs</code>
+    </div>
+  </section>
+</body>
+</html>

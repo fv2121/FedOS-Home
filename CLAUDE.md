@@ -63,8 +63,13 @@ src/
 │   ├── undo-toast.tsx        # Undo/notification surface
 │   ├── bottom-nav.tsx        # Mobile bottom navigation
 │   └── login-form.tsx        # Password entry form
+├── server/                   # Server-side domain and business logic (HCI-02 boundary)
+│   ├── README.md             # Boundary, import rules, intended future modules
+│   └── tasks/                # Durable task domain
+│       ├── index.ts          # Public exports
+│       └── service.ts        # Business logic layer (all CRUD + queries)
 └── lib/
-    ├── task-service.ts       # Business logic layer (all CRUD + queries)
+    ├── task-service.ts       # Compatibility re-export of @/server/tasks (do not add to)
     ├── auth.ts               # HMAC-SHA256 session tokens, bcrypt password validation
     ├── api-auth.ts           # Request-level auth check (cookie verification)
     ├── auth-constants.ts     # AUTH_COOKIE_NAME
@@ -81,7 +86,7 @@ src/
 ### Layer Responsibilities
 
 - **Database (Prisma)**: 7 models — Task, Category, Project, Tag, TaskTag, TaskEvent, TaskSource. Enums for status, priority, source type, actor type, project status.
-- **Service (lib/task-service.ts)**: All business logic. Transactional mutations. Query builder with dynamic filtering. Every mutation writes to task_events for audit trail.
+- **Server domain (`src/server/tasks/service.ts`)**: All task business logic. Transactional mutations. Query builder with dynamic filtering. Every mutation writes to task_events for audit trail. Imported via `@/server/tasks`. `src/lib/task-service.ts` remains as a thin compatibility re-export and must not accept new logic.
 - **API routes (app/api/llm/*)**: Thin delegation layer. Each route: validate with Zod → check auth → call service → return ok/fail response. No business logic in routes.
 - **Components**: TaskDashboard orchestrator composes TaskFilters, TaskCard, NewTaskView, CreateTaskPanel, TaskEditOverlay, TaskActionSheet, UndoToast, and BottomNav. Mutation logic lives in useTaskActions hook.
 - **Proxy (proxy.ts)**: Cookie-based session check, redirects unauthenticated users to /login.
@@ -138,6 +143,15 @@ npm run db:studio        # Prisma Studio GUI
 DATABASE_URL=postgresql://...    # Required
 AUTH_PASSWORD_HASH=...           # Required for deployment (bcrypt hash)
 AUTH_SECRET=...                  # Required for deployment (HMAC key)
+ANTHROPIC_API_KEY=...            # Required for real briefing generation
+FEDOS_MEMORY_ROOT=...            # Required for live Memory context
+FEDOS_DIGEST_ROOT=...            # Required for approved Memory Digest
+M365_CLIENT_ID=...               # Required for live Outlook ingestion
+M365_CLIENT_SECRET=...           # Required for live Outlook ingestion
+M365_TOKEN_PATH=...              # Required encrypted token file path
+M365_TOKEN_ENCRYPTION_KEY=...    # Required Fernet key for token file
+M365_TENANT_ID=common            # Optional; defaults to common
+M365_SCOPES=...                  # Optional; defaults to read-only mail/calendar scopes
 ```
 
 Generate a password hash: `node -e "const b=require('bcryptjs');console.log(b.hashSync('your-password',10))"`
@@ -161,7 +175,7 @@ These principles guide implementation quality. They should be challenged against
 
 1. **No pagination**: searchTasks hardcodes `take: 250`. Add cursor-based pagination for scale.
 2. **No error boundaries**: Component crashes take down the whole page.
-3. **No test framework**: No unit or integration tests. Consider Vitest for task-service.ts.
+3. **No test framework**: No unit or integration tests. Consider Vitest for `src/server/tasks/service.ts`.
 4. **Silent mutation failures**: API errors in the dashboard are swallowed (if `!res.ok` return). Add user-facing error feedback.
 5. **Unused public assets**: vercel.svg, next.svg, globe.svg, window.svg are Next.js defaults — remove if unused.
 6. **Search not optimized**: OR queries across 4 fields with insensitive matching. PostgreSQL full-text search would scale better.

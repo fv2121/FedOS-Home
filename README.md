@@ -54,11 +54,40 @@ Required local and deployment variables:
 - `AUTH_PASSWORD_HASH`
 - `AUTH_SECRET`
 
+Required for real intelligence runs:
+
+- `ANTHROPIC_API_KEY`
+- `FEDOS_MEMORY_ROOT`
+- `FEDOS_DIGEST_ROOT`
+- `M365_CLIENT_ID`
+- `M365_CLIENT_SECRET`
+- `M365_TOKEN_PATH`
+- `M365_TOKEN_ENCRYPTION_KEY`
+
+Optional Microsoft 365 settings:
+
+- `M365_TENANT_ID`
+- `M365_SCOPES`
+
 Generate a bcrypt password hash:
 
 ```bash
 node -e "const b=require('bcryptjs');console.log(b.hashSync('your-password',10))"
 ```
+
+Local intelligence smoke checks:
+
+```bash
+npx tsx scripts/smoke-memory-digest.ts
+npx tsx scripts/test-outlook-normalizer.ts
+npx tsx scripts/smoke-outlook-signals.ts
+npx tsx scripts/smoke-outlook-signals.ts --feed
+```
+
+`smoke-outlook-signals.ts --feed` fetches Outlook signals and passes them into
+the Home briefing pipeline with a fake LLM response. Use the authenticated
+briefing API with real signals when you want a persisted package from the real
+LLM.
 
 ## Deployment
 

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { listCategories } from "@/lib/task-service";
+import { listCategories } from "@/server/tasks";
 import { fail, ok } from "@/lib/http";
 import { requireAuth } from "@/lib/route-helpers";
 

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { deleteTask } from "@/lib/task-service";
+import { deleteTask } from "@/server/tasks";
 import { ok } from "@/lib/http";
 import { failFromError, requireJson } from "@/lib/route-helpers";
 

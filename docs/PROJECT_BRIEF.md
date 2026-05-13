@@ -5,6 +5,23 @@ Build the FedOS intelligence capability as part of the FedOS Home product runtim
 
 The intelligence capability should reduce cognitive load for one primary user by turning high-volume inbound information into a small, trustworthy set of priorities, recommendations, and action proposals.
 
+## Current State
+The Home-centered architecture is now the working product direction, not just a proposal.
+
+Implemented in FedOS Home:
+- Home-owned briefing and proposed-action database records
+- Home backend modules for Memory Digest loading, Outlook ingestion, signal preparation, LLM briefing generation, persistence, and proposal decisions
+- product APIs for briefing retrieval, briefing generation, and proposal decisions
+- a mobile-first Home briefing surface with durable tasks in the Tasks view
+- a protected Home Debug Console for inspecting the end-to-end intelligence pipeline
+
+Not yet implemented:
+- chat feedback and preserved briefing revisions
+- voice input
+- scheduled unattended morning runs
+- production-grade Microsoft 365 token storage
+- a durable outcome-feedback model for future reasoning
+
 ## Core Idea
 The FedOS intelligence capability is not a data aggregation product. It is a reasoning layer that sits above existing tools and source systems and is experienced through FedOS Home.
 
@@ -41,7 +58,7 @@ The intelligence capability reads Memory as context, primarily through approved 
 ### FedOS Home
 FedOS Home is the user-facing command center, product runtime, canonical approved-task store, and product database owner.
 
-It owns:
+It owns, or will own as the roadmap progresses:
 - mobile and desktop user experience
 - briefing package persistence
 - briefing revision history
@@ -52,7 +69,7 @@ It owns:
 - task source links
 - task event history
 - approval, rejection, edit, deferral, and completion flows
-- chat and later voice interaction
+- chat feedback and later voice interaction
 - the daily execution interface
 
 Signals and recommendations are not tasks. A proposed action becomes a task only after Federico approves or edits it in FedOS Home.
@@ -347,7 +364,7 @@ FedOS Home should present:
 
 The mobile experience should support lightweight morning review, triage, feedback, and voice/chat use. The desktop experience should support deeper follow-through on approved tasks and briefing-driven work.
 
-Debug dashboards can remain in the Intelligence repo during migration, but the product experience should live in Home.
+The Home Debug Console now owns MVP pipeline diagnostics. FedOS Intelligence may still keep lab-only experiments, but the product and operational debug path should live in Home.
 
 ### Voice
 Voice should support on-the-go moments such as getting ready, walking, or commuting.
@@ -389,16 +406,15 @@ The user should always be able to inspect, correct, approve, reject, or override
 ## MVP Scope
 
 ### MVP Goal
-Prove that the FedOS intelligence capability can produce a genuinely useful morning briefing from Outlook email, Outlook calendar, FedOS Memory, and active objectives, then make that briefing usable in FedOS Home for review, revision, and approved task creation.
+Prove that the FedOS intelligence capability can produce a genuinely useful morning briefing from Outlook email, Outlook calendar, FedOS Memory, and active objectives, then make that briefing usable in FedOS Home for review and approved task creation. Preserved revisions and richer conversational feedback are the next product layer.
 
 ### In Scope
 - Outlook email ingestion
 - Outlook calendar ingestion
-- normalization into `Item`
+- normalization into Home `BriefingSignal` records
 - hygiene filtering and deduplication
 - read-only FedOS Memory context loading
 - approved Memory Digest consumption
-- active objective loading
 - LLM-first briefing generation
 - ranked priorities with rationale
 - concise narrative summary
@@ -406,9 +422,9 @@ Prove that the FedOS intelligence capability can produce a genuinely useful morn
 - proposed actions
 - Home-owned briefing package/proposed-action persistence
 - uncertainty reporting
-- feedback capture
-- basic Home review experience plus Intelligence debug/reference experience during migration
-- scheduled morning job entrypoint
+- approve, reject, and defer decisions for proposed actions
+- Home review experience across mobile and desktop
+- Home Debug Console for pipeline inspection, dry runs, and explicit persistence
 
 ### Out Of Scope
 - Gmail
@@ -417,6 +433,11 @@ Prove that the FedOS intelligence capability can produce a genuinely useful morn
 - Teams messages and transcripts
 - autonomous external actions
 - automatic task creation without Home approval
+- chat feedback and preserved briefing revisions
+- voice input
+- scheduled unattended morning runs
+- production-grade Microsoft 365 token storage
+- full outcome-feedback learning model
 - broad external news ingestion
 - multi-user workflows
 - deep long-horizon analytics
@@ -427,7 +448,7 @@ Prove that the FedOS intelligence capability can produce a genuinely useful morn
 - Priorities include clear rationale and traceable source context.
 - Proposed actions are specific enough for Home approval.
 - Memory context materially improves relevance.
-- Feedback can be captured and used to improve future runs.
+- Proposed-action decisions are captured in Home and can later feed future reasoning.
 - Missing context and source failures are visible rather than hidden.
 
 ## High-Level Architecture
@@ -442,7 +463,7 @@ FedOS Memory
 -> Home-owned BriefingPackage + ProposedActions
 -> Home mobile-first and desktop-continuous review
 -> Approved Home tasks
--> Feedback + Task Outcomes
+-> Proposal decisions + future feedback and task outcomes
 -> Future Reasoning
 ```
 
@@ -454,7 +475,7 @@ Initial sources:
 - Outlook calendar
 
 ### Normalization
-Convert source-specific payloads into canonical `Item` structures with source references, timestamps, participants, summaries, metadata, and context tags.
+Convert source-specific payloads into Home `BriefingSignal` structures with source references, timestamps, participants, summaries, metadata, and context tags. Earlier docs used `Item` as the conceptual name; `BriefingSignal` is the current implementation name.
 
 ### Context Assembly
 Combine normalized signals with:
@@ -477,15 +498,15 @@ Use LLM workflows for:
 - reflection prompts
 
 ### Home Product Persistence
-Store briefing packages, revisions, proposed actions, review decisions, approved tasks, and feedback events in the FedOS Home PostgreSQL database.
+Store briefing packages, proposed actions, approved tasks, decision state, source references, and Memory Digest provenance in the FedOS Home PostgreSQL database. Briefing revisions, richer review decisions, and feedback events remain future additions.
 
 ### Learning
-Use feedback and task outcomes to refine future judgment.
+Use proposal decisions first, then richer feedback and task outcomes, to refine future judgment.
 
 ## Core Models
 
-### Item
-Normalized representation of an incoming signal.
+### BriefingSignal
+Normalized representation of an incoming signal. This is currently an internal runtime structure rather than a durable database model.
 
 Typical fields:
 - `id`
@@ -513,22 +534,46 @@ Typical fields:
 - `priority_weight`
 - `metadata`
 
+### BriefingPackage
+Home-owned user-visible briefing generated by the intelligence module.
+
+Current durable fields:
+- `id`
+- `status`
+- `context_mode`
+- `payload`
+- `source_refs`
+- `memory_digest_hash`
+- `memory_digest_stale`
+- `memory_digest_approved_at`
+- `model`
+- `prompt_version`
+- `created_at`
+- `updated_at`
+
 ### ProposedAction
 Draft action generated by the intelligence capability for review in Home.
 
-Typical fields:
+Current durable fields:
 - `id`
+- `briefing_package_id`
 - `title`
-- `context`
+- `description`
 - `rationale`
-- `signal_id`
 - `source_refs`
+- `suggested_status`
 - `suggested_priority`
-- `suggested_deadline`
+- `suggested_due_at`
 - `suggested_owner`
-- `suggested_category`
+- `suggested_category_id`
+- `suggested_project_id`
+- `suggested_source_type`
+- `suggested_source_ref`
+- `suggested_tags`
 - `uncertainty`
-- `metadata`
+- `status`
+- `decision_reason`
+- `decided_at`
 
 ### Recommendation
 Suggested action, resource, topic, person, or next step.
@@ -546,7 +591,7 @@ Typical fields:
 - `status`
 
 ### FeedbackEvent
-Explicit or implicit user feedback.
+Future explicit or implicit user feedback.
 
 Typical fields:
 - `id`
@@ -572,14 +617,14 @@ Typical fields:
 - `metadata`
 
 ## Build Priorities
-1. Keep the LLM-first morning brief reliable and useful during migration.
-2. Add Home domain models for briefing packages, revisions, proposed actions, review decisions, and feedback.
-3. Move the useful intelligence runtime into the Home backend.
-4. Build the mobile-first, desktop-continuous Home briefing experience.
-5. Capture approval/rejection/edit/defer feedback and task outcomes in Home.
-6. Improve Memory-driven relevance and stakeholder judgment through approved Memory Digest use.
-7. Harden auth, token storage, deployment readiness, and scheduling.
-8. Expand source coverage once the core loop is trustworthy.
+1. Keep the LLM-first morning brief reliable and useful now that it runs inside Home.
+2. Add chat feedback and preserved briefing revisions.
+3. Model the first useful outcome signals from proposal decisions and Home task changes.
+4. Harden Microsoft 365 token storage, scheduling, token budgets, and deployment readiness before unattended production runs.
+5. Improve Memory-driven relevance and stakeholder judgment through approved Memory Digest use.
+6. Decide where approved Memory Digest artifacts should live long term.
+7. Expand source coverage once the core Outlook-to-Home loop is trustworthy.
+8. Reposition or retire the remaining FedOS Intelligence runtime surfaces once Home reaches parity.
 
 ## Engineering Principles
 - Keep routes thin and business logic in services.
@@ -593,10 +638,11 @@ Typical fields:
 - Avoid multi-agent complexity until the core loop is reliable.
 
 ## Open Questions
-- What is the minimum viable Home domain model for briefing packages, revisions, proposed actions, and review decisions?
 - Which Home task outcomes should feed future reasoning first?
 - Which Memory files should be included in each context mode?
 - How should proposed Memory updates be reviewed and approved?
 - What is the right cadence beyond the morning brief?
 - Which source should be added after Outlook calendar/email: Teams, Gmail, or external news?
-- Which current Intelligence debug tools should remain lab-only after Home owns the runtime?
+- Which current Intelligence debug tools should remain lab-only now that Home owns the MVP Debug Console?
+- Where should approved Memory Digest artifacts live after the transition?
+- What production secret store should replace the local Microsoft 365 token file?

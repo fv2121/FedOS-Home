@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { fail, ok } from "@/lib/http";
-import { getTaskHistory } from "@/lib/task-service";
+import { getTaskHistory } from "@/server/tasks";
 import { requireJson } from "@/lib/route-helpers";
 
 const schema = z.object({ id: z.string().min(1) });

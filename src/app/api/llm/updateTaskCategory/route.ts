@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { eventActorSchema, updateTaskCategorySchema } from "@/lib/validators";
-import { updateTaskCategory } from "@/lib/task-service";
+import { updateTaskCategory } from "@/server/tasks";
 import { ok } from "@/lib/http";
 import { failFromError, requireJson } from "@/lib/route-helpers";
 

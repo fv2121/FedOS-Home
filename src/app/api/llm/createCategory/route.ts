@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createCategorySchema } from "@/lib/validators";
-import { createCategory } from "@/lib/task-service";
+import { createCategory } from "@/server/tasks";
 import { ok } from "@/lib/http";
 import { failFromError, requireJson } from "@/lib/route-helpers";
 

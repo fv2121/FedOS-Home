@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { ok, fail } from "@/lib/http";
 import { taskFilterSchema } from "@/lib/validators";
-import { searchTasks } from "@/lib/task-service";
+import { searchTasks } from "@/server/tasks";
 import { requireJson } from "@/lib/route-helpers";
 
 const schema = z.object({ filters: taskFilterSchema.optional() });

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { fail, ok } from "@/lib/http";
-import { summarizeTasks } from "@/lib/task-service";
+import { summarizeTasks } from "@/server/tasks";
 import { requireJson } from "@/lib/route-helpers";
 
 const schema = z.object({ scope: z.string().optional() });

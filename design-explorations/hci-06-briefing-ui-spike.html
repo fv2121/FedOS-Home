@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FedOS Home HCI-06 Briefing UI Spike</title>
+<style>
+  :root {
+    --page-bg: #0d1117;
+    --page-fg: #eef2f7;
+    --page-muted: #8d99a8;
+    --page-line: rgba(255,255,255,0.10);
+
+    --desk-bg: #f7f6f2;
+    --desk-panel: #ffffff;
+    --desk-subtle: #eef3f6;
+    --desk-line: #d8dee6;
+    --desk-text: #111827;
+    --desk-text-2: #4b5563;
+    --desk-text-3: #6b7280;
+
+    --mobile-bg: #14141a;
+    --mobile-panel: #1c1c24;
+    --mobile-surface: #252530;
+    --mobile-line: rgba(255,255,255,0.08);
+    --mobile-text: #f1f1f3;
+    --mobile-text-2: #a1a1aa;
+    --mobile-text-3: #71717a;
+
+    --accent: #1f8f5f;
+    --accent-soft: #dff4e9;
+    --accent-mobile: #22c55e;
+    --warn: #b7791f;
+    --warn-soft: #fff4d6;
+    --danger: #b42318;
+    --danger-soft: #ffe4df;
+    --info: #2563eb;
+    --info-soft: #dce9ff;
+
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Manrope", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page-bg); color: var(--page-fg); }
+  body { padding: 28px; }
+
+  .page-header {
+    max-width: 1500px;
+    margin: 0 auto 22px;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--page-line);
+    padding-bottom: 18px;
+  }
+
+  .page-header h1 {
+    margin: 0 0 6px;
+    font-size: 23px;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .page-header p {
+    margin: 0;
+    max-width: 820px;
+    color: var(--page-muted);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+
+  .badge {
+    border: 1px solid var(--page-line);
+    color: var(--page-muted);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .stage {
+    max-width: 1500px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(860px, 1fr) 390px;
+    gap: 26px;
+    align-items: start;
+  }
+
+  .caption {
+    margin: 0 0 10px;
+    color: var(--page-muted);
+    font-size: 13px;
+  }
+
+  .caption b {
+    display: block;
+    color: var(--page-fg);
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  .desktop-frame {
+    min-height: 730px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: var(--desk-bg);
+    color: var(--desk-text);
+    box-shadow: 0 20px 70px rgba(0,0,0,0.38), 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  .desktop-shell {
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr);
+    min-height: 730px;
+  }
+
+  .desktop-rail {
+    background: #111827;
+    color: #d9e0ea;
+    padding: 22px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .brand {
+    font-weight: 800;
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .rail-group {
+    display: grid;
+    gap: 6px;
+  }
+
+  .rail-button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: #98a4b3;
+    border-radius: 8px;
+    padding: 9px 10px;
+    text-align: left;
+    font: 650 13px/1.2 inherit;
+  }
+
+  .rail-button.active {
+    background: #223042;
+    color: #ffffff;
+  }
+
+  .rail-spacer { flex: 1; }
+
+  .rail-note {
+    border-top: 1px solid rgba(255,255,255,0.10);
+    padding-top: 14px;
+    color: #98a4b3;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .desktop-main {
+    padding: 22px;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .desktop-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+  }
+
+  .desktop-top h2,
+  .phone-title h2 {
+    margin: 0;
+    font-size: 25px;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .desktop-top p,
+  .phone-title p {
+    margin: 6px 0 0;
+    color: var(--desk-text-3);
+    font-size: 13px;
+  }
+
+  .status-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .pill {
+    border: 1px solid var(--desk-line);
+    background: var(--desk-panel);
+    border-radius: 999px;
+    padding: 6px 9px;
+    color: var(--desk-text-2);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .pill.green {
+    border-color: #bfe8d0;
+    background: var(--accent-soft);
+    color: #17603f;
+  }
+
+  .desktop-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+    gap: 18px;
+    min-height: 0;
+  }
+
+  .flow,
+  .panel-flow {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+  }
+
+  .surface {
+    background: var(--desk-panel);
+    border: 1px solid var(--desk-line);
+    border-radius: 8px;
+    padding: 15px;
+  }
+
+  .surface.subtle {
+    background: var(--desk-subtle);
+  }
+
+  .section-title {
+    margin: 0 0 10px;
+    color: var(--desk-text-3);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .narrative {
+    margin: 0;
+    color: var(--desk-text);
+    font-size: 17px;
+    line-height: 1.46;
+    font-weight: 650;
+  }
+
+  .priority-list,
+  .recommendation-list,
+  .proposal-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .priority-row {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 11px;
+    align-items: start;
+  }
+
+  .rank {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .row-title {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.25;
+    font-weight: 750;
+  }
+
+  .row-copy {
+    margin: 4px 0 0;
+    color: var(--desk-text-2);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .recommendation {
+    display: grid;
+    grid-template-columns: 8px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .marker {
+    width: 8px;
+    height: 8px;
+    margin-top: 5px;
+    border-radius: 50%;
+    background: var(--info);
+  }
+
+  .proposal-card {
+    border: 1px solid var(--desk-line);
+    border-radius: 8px;
+    background: var(--desk-panel);
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .proposal-card[data-state="approved"] {
+    border-color: #bfe8d0;
+    background: #f1fbf5;
+  }
+
+  .proposal-card[data-state="deferred"] {
+    border-color: #f1d590;
+    background: #fffaf0;
+  }
+
+  .proposal-card[data-state="rejected"] {
+    opacity: 0.66;
+  }
+
+  .proposal-head {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .proposal-title {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.28;
+    font-weight: 800;
+  }
+
+  .status-chip {
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: #eef2f7;
+    color: #4b5563;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .proposal-card[data-state="approved"] .status-chip {
+    background: var(--accent-soft);
+    color: #17603f;
+  }
+
+  .proposal-card[data-state="deferred"] .status-chip {
+    background: var(--warn-soft);
+    color: #7a4f10;
+  }
+
+  .proposal-card[data-state="rejected"] .status-chip {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .proposal-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .mini-chip {
+    border-radius: 999px;
+    background: #f3f5f7;
+    color: var(--desk-text-3);
+    padding: 4px 7px;
+    font-size: 11px;
+    font-weight: 650;
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .action-button {
+    appearance: none;
+    border: 1px solid var(--desk-line);
+    background: #ffffff;
+    color: var(--desk-text);
+    border-radius: 8px;
+    padding: 7px 9px;
+    font: 750 12px/1 inherit;
+    cursor: pointer;
+  }
+
+  .action-button.primary {
+    background: #111827;
+    border-color: #111827;
+    color: #ffffff;
+  }
+
+  .action-button.warn {
+    color: #7a4f10;
+    border-color: #edcf87;
+    background: #fffaf0;
+  }
+
+  .action-button.danger {
+    color: var(--danger);
+    border-color: #ffc5bb;
+    background: #fff7f5;
+  }
+
+  .phone-frame {
+    width: 390px;
+    height: 800px;
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    box-shadow: 0 20px 70px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.10);
+  }
+
+  .phone-notch {
+    position: absolute;
+    top: 9px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 98px;
+    height: 24px;
+    border-radius: 999px;
+    background: #000;
+    z-index: 3;
+  }
+
+  .phone-screen {
+    position: absolute;
+    inset: 0;
+    background: var(--mobile-bg);
+    color: var(--mobile-text);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 0;
+  }
+
+  .phone-header {
+    padding: 48px 18px 12px;
+    background: var(--mobile-bg);
+  }
+
+  .phone-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .phone-title h2 {
+    font-size: 25px;
+    color: var(--mobile-text);
+  }
+
+  .phone-title p {
+    color: var(--mobile-text-3);
+  }
+
+  .phone-kicker {
+    color: var(--accent-mobile);
+    font-size: 12px;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+
+  .phone-content {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 14px 16px;
+    display: grid;
+    align-content: start;
+    gap: 12px;
+  }
+
+  .phone-band {
+    background: var(--mobile-panel);
+    border: 1px solid var(--mobile-line);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .phone-band h3 {
+    margin: 0 0 8px;
+    color: var(--mobile-text-3);
+    font-size: 12px;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+
+  .phone-band p {
+    margin: 0;
+    color: var(--mobile-text-2);
+    font-size: 14px;
+    line-height: 1.42;
+  }
+
+  .phone-band .lead {
+    color: var(--mobile-text);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .mobile-priority {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 10px;
+    align-items: start;
+    padding: 9px 0;
+    border-top: 1px solid var(--mobile-line);
+  }
+
+  .mobile-priority:first-of-type {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .mobile-rank {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: var(--mobile-surface);
+    color: var(--accent-mobile);
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .mobile-proposal {
+    background: var(--mobile-panel);
+    border: 1px solid var(--mobile-line);
+    border-radius: 8px;
+    padding: 13px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-proposal[data-state="approved"] {
+    border-color: rgba(34,197,94,0.38);
+    background: #17251d;
+  }
+
+  .mobile-proposal[data-state="deferred"] {
+    border-color: rgba(251,191,36,0.36);
+  }
+
+  .mobile-proposal-title {
+    margin: 0;
+    color: var(--mobile-text);
+    font-size: 15px;
+    line-height: 1.28;
+    font-weight: 800;
+  }
+
+  .mobile-proposal-copy {
+    margin: 0;
+    color: var(--mobile-text-2);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .mobile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 7px;
+  }
+
+  .mobile-actions button {
+    appearance: none;
+    border: 1px solid var(--mobile-line);
+    background: var(--mobile-surface);
+    color: var(--mobile-text-2);
+    border-radius: 8px;
+    min-height: 36px;
+    font: 800 12px/1 inherit;
+  }
+
+  .mobile-actions button.primary {
+    background: var(--accent-mobile);
+    border-color: var(--accent-mobile);
+    color: #052e16;
+  }
+
+  .mobile-actions button.warn {
+    color: #fbbf24;
+  }
+
+  .phone-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+    border-top: 1px solid var(--mobile-line);
+    background: var(--mobile-panel);
+    padding: 7px 8px 12px;
+  }
+
+  .phone-nav button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--mobile-text-3);
+    border-radius: 8px;
+    min-height: 47px;
+    font: 750 13px/1 inherit;
+  }
+
+  .phone-nav button.active {
+    background: var(--mobile-surface);
+    color: var(--accent-mobile);
+  }
+
+  @media (max-width: 1280px) {
+    .stage { grid-template-columns: 1fr; }
+    .desktop-frame { min-width: 0; }
+    .mobile-wrap { justify-self: start; }
+  }
+
+  @media (max-width: 960px) {
+    body { padding: 18px; }
+    .page-header { display: block; }
+    .badge-row { justify-content: flex-start; margin-top: 14px; }
+    .desktop-frame { overflow-x: auto; }
+    .desktop-shell { min-width: 850px; }
+  }
+</style>
+</head>
+<body>
+  <header class="page-header">
+    <div>
+      <h1>HCI-06 Briefing UI Spike</h1>
+      <p>
+        Standalone throwaway mockup. Hard-coded data only. The design tests how a persisted briefing could become a review surface without turning proposed actions into normal tasks until approval.
+      </p>
+    </div>
+    <div class="badge-row" aria-label="Design constraints">
+      <span class="badge">not integrated</span>
+      <span class="badge">fake data</span>
+      <span class="badge">mobile-first</span>
+      <span class="badge">desktop-continuous</span>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section>
+      <p class="caption"><b>Desktop</b>Same primary navigation as mobile, with a wider workbench for briefing review and proposal decisions.</p>
+      <div class="desktop-frame">
+        <div class="desktop-shell">
+          <aside class="desktop-rail">
+            <div class="brand">FedOS Home</div>
+            <nav class="rail-group" aria-label="Desktop mock navigation">
+              <button class="rail-button">Home</button>
+              <button class="rail-button active">Briefing</button>
+              <button class="rail-button">New task</button>
+            </nav>
+            <div class="rail-spacer"></div>
+            <div class="rail-note">
+              Latest package<br />
+              cmp2...wneg<br />
+              3 pending actions
+            </div>
+          </aside>
+
+          <section class="desktop-main">
+            <div class="desktop-top">
+              <div>
+                <h2>Morning briefing</h2>
+                <p>Tuesday 12 May · business context · generated 08:12</p>
+              </div>
+              <div class="status-strip">
+                <span class="pill green">Memory digest fresh</span>
+                <span class="pill">Claude Sonnet</span>
+                <span class="pill">5 source signals</span>
+              </div>
+            </div>
+
+            <div class="desktop-grid">
+              <div class="flow">
+                <section class="surface subtle">
+                  <h3 class="section-title">Narrative</h3>
+                  <p class="narrative">
+                    The board pre-read is the only clearly blocking item this morning. Maria has followed up twice, while the EMEA growth review looks like the main live moment to align the commercial narrative before edits go wider.
+                  </p>
+                </section>
+
+                <section class="surface">
+                  <h3 class="section-title">Top priorities</h3>
+                  <div class="priority-list">
+                    <div class="priority-row">
+                      <span class="rank">1</span>
+                      <div>
+                        <p class="row-title">Land the board pre-read edits</p>
+                        <p class="row-copy">Maria is blocked on section 3 and needs your read before Wednesday.</p>
+                      </div>
+                    </div>
+                    <div class="priority-row">
+                      <span class="rank">2</span>
+                      <div>
+                        <p class="row-title">Use the EMEA review to settle the growth story</p>
+                        <p class="row-copy">The live meeting is the fastest path to resolve the open framing question.</p>
+                      </div>
+                    </div>
+                    <div class="priority-row">
+                      <span class="rank">3</span>
+                      <div>
+                        <p class="row-title">Protect the late-morning focus block</p>
+                        <p class="row-copy">No hard conflict appears after 10:30, so this is the best slot for edits.</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="surface">
+                  <h3 class="section-title">Recommendations</h3>
+                  <div class="recommendation-list">
+                    <div class="recommendation">
+                      <span class="marker"></span>
+                      <p class="row-copy">Reply to Maria with a concrete edit window before the EMEA review starts.</p>
+                    </div>
+                    <div class="recommendation">
+                      <span class="marker"></span>
+                      <p class="row-copy">Capture one decision from the growth review and fold it into section 3.</p>
+                    </div>
+                    <div class="recommendation">
+                      <span class="marker"></span>
+                      <p class="row-copy">Keep the afternoon open for follow-up only if the pre-read is still unresolved.</p>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="surface">
+                  <h3 class="section-title">Uncertainty</h3>
+                  <p class="row-copy">
+                    The signal pack does not show whether Maria already has a partial draft from you. Priority is inferred from repeated follow-up and board timing.
+                  </p>
+                </section>
+              </div>
+
+              <aside class="panel-flow">
+                <section class="surface">
+                  <h3 class="section-title">Proposed actions</h3>
+                  <div class="proposal-list">
+                    <article class="proposal-card" data-state="pending">
+                      <div class="proposal-head">
+                        <h4 class="proposal-title">Edit section 3 of the Q3 board pre-read</h4>
+                        <span class="status-chip">pending</span>
+                      </div>
+                      <p class="row-copy">Suggested from Maria's follow-up thread. Keep as a task only if you agree this is still yours.</p>
+                      <div class="proposal-meta">
+                        <span class="mini-chip">source: email</span>
+                        <span class="mini-chip">priority: high</span>
+                        <span class="mini-chip">due: Wed</span>
+                      </div>
+                      <div class="button-row">
+                        <button class="action-button primary" data-decision="approved">Approve</button>
+                        <button class="action-button">Edit</button>
+                        <button class="action-button warn" data-decision="deferred">Defer</button>
+                        <button class="action-button danger" data-decision="rejected">Reject</button>
+                      </div>
+                    </article>
+
+                    <article class="proposal-card" data-state="pending">
+                      <div class="proposal-head">
+                        <h4 class="proposal-title">Ask Luca for the EMEA growth decision owner</h4>
+                        <span class="status-chip">pending</span>
+                      </div>
+                      <p class="row-copy">Useful if today's meeting ends without a named owner for follow-through.</p>
+                      <div class="proposal-meta">
+                        <span class="mini-chip">source: calendar</span>
+                        <span class="mini-chip">status: waiting</span>
+                      </div>
+                      <div class="button-row">
+                        <button class="action-button primary" data-decision="approved">Approve</button>
+                        <button class="action-button">Edit</button>
+                        <button class="action-button warn" data-decision="deferred">Defer</button>
+                        <button class="action-button danger" data-decision="rejected">Reject</button>
+                      </div>
+                    </article>
+
+                    <article class="proposal-card" data-state="deferred">
+                      <div class="proposal-head">
+                        <h4 class="proposal-title">Review the full signal pack after lunch</h4>
+                        <span class="status-chip">deferred</span>
+                      </div>
+                      <p class="row-copy">Lower-confidence suggestion. Keep it out of the task list unless the morning changes.</p>
+                      <div class="button-row">
+                        <button class="action-button primary" data-decision="approved">Approve</button>
+                        <button class="action-button danger" data-decision="rejected">Reject</button>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+              </aside>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="mobile-wrap">
+      <p class="caption"><b>Mobile</b>Fast triage: read the gist, make proposal decisions, continue later on desktop.</p>
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <header class="phone-header">
+            <div class="phone-title">
+              <div>
+                <div class="phone-kicker">Briefing</div>
+                <h2>Morning review</h2>
+                <p>Tue 12 May · 3 actions</p>
+              </div>
+              <span class="status-chip">fresh</span>
+            </div>
+          </header>
+
+          <section class="phone-content">
+            <div class="phone-band">
+              <h3>Narrative</h3>
+              <p class="lead">Board pre-read first. EMEA review second. Protect the focus block after 10:30.</p>
+            </div>
+
+            <div class="phone-band">
+              <h3>Top priorities</h3>
+              <div class="mobile-priority">
+                <span class="mobile-rank">1</span>
+                <div>
+                  <p class="row-title">Land board edits</p>
+                  <p class="row-copy">Maria is blocked and has followed up twice.</p>
+                </div>
+              </div>
+              <div class="mobile-priority">
+                <span class="mobile-rank">2</span>
+                <div>
+                  <p class="row-title">Settle EMEA owner</p>
+                  <p class="row-copy">Use the live meeting to remove ambiguity.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="phone-band">
+              <h3>Recommended</h3>
+              <p>Reply to Maria before the review, then use 10:30-12:00 for the board pre-read while the context is warm.</p>
+            </div>
+
+            <article class="mobile-proposal" data-state="pending">
+              <h3 class="section-title">Proposed action</h3>
+              <p class="mobile-proposal-title">Edit section 3 of the Q3 board pre-read</p>
+              <p class="mobile-proposal-copy">Approve to make this a real Home task. Edit can wait for the richer desktop surface.</p>
+              <div class="mobile-actions">
+                <button class="primary" data-decision="approved">Approve</button>
+                <button class="warn" data-decision="deferred">Defer</button>
+                <button data-decision="rejected">Reject</button>
+              </div>
+            </article>
+
+            <article class="mobile-proposal" data-state="pending">
+              <h3 class="section-title">Proposed action</h3>
+              <p class="mobile-proposal-title">Ask Luca for the growth decision owner</p>
+              <p class="mobile-proposal-copy">Good candidate for a waiting task if the meeting ends unresolved.</p>
+              <div class="mobile-actions">
+                <button class="primary" data-decision="approved">Approve</button>
+                <button class="warn" data-decision="deferred">Defer</button>
+                <button data-decision="rejected">Reject</button>
+              </div>
+            </article>
+
+            <div class="phone-band">
+              <h3>Uncertainty</h3>
+              <p>The system cannot tell whether Maria already has your partial edits. The recommendation is based on urgency signals.</p>
+            </div>
+          </section>
+
+          <nav class="phone-nav" aria-label="Mobile mock navigation">
+            <button>Home</button>
+            <button class="active">Briefing</button>
+            <button>New task</button>
+          </nav>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+  function setState(card, nextState) {
+    card.dataset.state = nextState;
+    const chip = card.querySelector(".status-chip");
+    if (chip) chip.textContent = nextState;
+  }
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-decision]");
+    if (!button) return;
+    const card = button.closest(".proposal-card, .mobile-proposal");
+    if (!card) return;
+    setState(card, button.dataset.decision);
+  });
+</script>
+</body>
+</html>

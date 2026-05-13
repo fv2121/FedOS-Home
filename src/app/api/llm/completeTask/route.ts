@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { completeTaskSchema, eventActorSchema } from "@/lib/validators";
-import { completeTask } from "@/lib/task-service";
+import { completeTask } from "@/server/tasks";
 import { ok } from "@/lib/http";
 import { failFromError, requireJson } from "@/lib/route-helpers";
 
