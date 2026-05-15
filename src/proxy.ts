@@ -3,7 +3,17 @@ import type { NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth-constants";
 import { verifySessionToken } from "@/lib/session-token";
 
-const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/health", "/_next", "/favicon.ico"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/api/auth/login",
+  "/api/health",
+  // POC-07: agent HTTP adapter is gated by Authorization: Bearer
+  // ($FEDOS_AGENT_TOKEN) inside the route handlers, not by browser session
+  // cookies. Bypass cookie auth here so mobile/remote LLM clients can reach it.
+  "/api/agent",
+  "/_next",
+  "/favicon.ico",
+];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

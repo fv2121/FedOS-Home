@@ -11,7 +11,9 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "agent:tasks": "tsx scripts/agent-tasks.ts",
+    "agent:mcp": "tsx scripts/mcp-server.ts"
   },
   "engines": {
     "node": ">=20.9.0"
@@ -21,6 +23,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@prisma/client": "^6.18.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",

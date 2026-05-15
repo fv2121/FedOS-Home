@@ -1838,10 +1838,8 @@ Raw string literals `"active"`, `"waiting"`, `"done"` in switch/case logic despi
 Trusts `x-forwarded-proto` header without a `TRUST_PROXY` guard — can be spoofed if the app is exposed directly rather than behind a reverse proxy.
 **Fix:** Only trust the forwarded header when `process.env.TRUST_PROXY === "true"`.
 
-### `proxy.ts` is never wired as middleware
-**File:** `src/proxy.ts`
-Exports a `proxy()` function and `config` object but no `middleware.ts` imports it, so unauthenticated users are not redirected server-side.
-**Fix:** Either create `src/middleware.ts` with `export { proxy as middleware, config }`, or delete the file and remove the CLAUDE.md reference.
+### ~~`proxy.ts` is never wired as middleware~~
+**Superseded.** Next.js 16 uses `src/proxy.ts` directly as the middleware file (confirmed by the build output: `ƒ Proxy (Middleware)`). No `src/middleware.ts` is needed; creating one causes a build conflict. The CLAUDE.md comment "Auth proxy (Next.js 16 middleware convention)" is correct. This item is closed.
 
 ### Color maps rebuilt on every render
 **Files:** `src/features/tasks/components/task-card.tsx:73`, `src/features/tasks/components/task-edit-overlay.tsx:143`
